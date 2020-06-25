@@ -2,13 +2,12 @@ package com.solace.test.integration.semp.v2;
 
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.solace.test.integration.semp.v2.action.ApiClient;
-import com.solace.test.integration.semp.v2.config.api.AllApi;
 
 import java.util.logging.Logger;
 
 public class SempV2Api {
-	private final com.solace.test.integration.semp.v2.config.api.AllApi configApi;
 	private final com.solace.test.integration.semp.v2.action.api.AllApi actionApi;
+	private final com.solace.test.integration.semp.v2.config.api.AllApi configApi;
 	private final com.solace.test.integration.semp.v2.monitor.api.AllApi monitorApi;
 
 	private static final Logger LOG = Logger.getLogger(SempV2Api.class.getName());
@@ -40,12 +39,12 @@ public class SempV2Api {
 		this.monitorApi = new com.solace.test.integration.semp.v2.monitor.api.AllApi(monitorApiClient);
 	}
 
-	public AllApi config() {
-		return configApi;
-	}
-
 	public com.solace.test.integration.semp.v2.action.api.AllApi action() {
 		return actionApi;
+	}
+
+	public com.solace.test.integration.semp.v2.config.api.AllApi config() {
+		return configApi;
 	}
 
 	public com.solace.test.integration.semp.v2.monitor.api.AllApi monitor() {
