@@ -81,7 +81,6 @@ The method will integrate this project into your own. This is the include-and-fo
                            <goal>exec</goal>
                        </goals>
                        <configuration>
-                           <skip>${solace.integration.test.support.install.skip}</skip>
                            <executable>git</executable>
                            <arguments>
                                <argument>-C</argument>
@@ -101,7 +100,6 @@ The method will integrate this project into your own. This is the include-and-fo
                            <goal>exec</goal>
                        </goals>
                        <configuration>
-                           <skip>${solace.integration.test.support.install.skip}</skip>
                            <executable>git</executable>
                            <arguments>
                                <argument>-C</argument>
