@@ -142,7 +142,7 @@ The method will integrate this project into your own. This is the include-and-fo
            <id>solace-integration-test-support_install</id>
            <activation>
                <file>
-                   <missing>${settings.localRepository}/com/solace/test/integration/solace-integration-test-support/${solace.integration.test.support.version}</missing>
+                   <missing>${user.home}/.m2/repository/com/solace/test/integration/solace-integration-test-support/${solace.integration.test.support.version}</missing>
                </file>
            </activation>
            <properties>
