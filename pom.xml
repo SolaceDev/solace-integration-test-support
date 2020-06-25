@@ -17,6 +17,23 @@
 		<repoName>SolaceDev</repoName>
 	</properties>
 
+	<licenses>
+		<license>
+			<name>Apache License, Version 2.0</name>
+			<url>https://github.com/${repoName}/solace-integration-test-support/blob/master/LICENSE</url>
+			<distribution>repo</distribution>
+		</license>
+	</licenses>
+
+	<developers>
+		<developer>
+			<name>Support for Solace</name>
+			<email>support@solace.com</email>
+			<organization>Solace</organization>
+			<organizationUrl>http://solace.community</organizationUrl>
+		</developer>
+	</developers>
+
 	<organization>
 		<name>Solace</name>
 		<url>https://www.solace.com</url>
