@@ -10,7 +10,7 @@
 	<packaging>pom</packaging>
 
 	<name>Solace Integration Test Support</name>
-	<description>Support suite for testing solace integration projects</description>
+	<description>Support suite for testing Solace integration projects</description>
 	<url>https://github.com/${repoName}/solace-integration-test-support/tree/${project.scm.tag}</url>
 
 	<properties>
@@ -32,4 +32,40 @@
 	<modules>
 		<module>semp-client</module>
 	</modules>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>flatten-maven-plugin</artifactId>
+				<version>1.1.0</version>
+				<configuration>
+					<updatePomFile>true</updatePomFile>
+					<flattenMode>oss</flattenMode>
+					<pomElements>
+						<distributionManagement>remove</distributionManagement>
+						<repositories>remove</repositories>
+					</pomElements>
+				</configuration>
+				<executions>
+					<!-- enable flattening -->
+					<execution>
+						<id>flatten</id>
+						<phase>process-resources</phase>
+						<goals>
+							<goal>flatten</goal>
+						</goals>
+					</execution>
+					<!-- ensure proper cleanup -->
+					<execution>
+						<id>flatten.clean</id>
+						<phase>clean</phase>
+						<goals>
+							<goal>clean</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
 </project>
