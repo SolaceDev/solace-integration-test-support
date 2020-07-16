@@ -30,13 +30,14 @@ The method will integrate this project into your own. This is the include-and-fo
 
 1. First, we'll shallowly add this project as a submodule to the root of your project:
     ```shell script
-    git submodule add --depth 1 https://github.com/SolaceDev/solace-integration-test-support.git
+    git submodule add --depth 1 ../../SolaceDev/solace-integration-test-support.git
     ```
-   **NOTE:** **DO NOT TOUCH** this submodule. It will be automatically managed and updated by the `exec-maven-plugin` in one of the next few steps.
+   **NOTE:** **DO NOT TOUCH** this submodule. It will be automatically managed and updated by the `exec-maven-plugin` in one of the next few steps. You only need to commit whenever you update the version.
 1. In your POM file, add these properties to your `pom.xml`:
     ```xml
    <properties>
-       <solace.integration.test.support.version>0.1.0</solace.integration.test.support.version>
+       <solace.integration.test.support.version>0.2.0</solace.integration.test.support.version>
+       <solace.integration.test.support.fetch_checkout.skip>false</solace.integration.test.support.fetch_checkout.skip>
        <solace.integration.test.support.install.skip>true</solace.integration.test.support.install.skip>
    </properties>
     ```
@@ -81,6 +82,7 @@ The method will integrate this project into your own. This is the include-and-fo
                            <goal>exec</goal>
                        </goals>
                        <configuration>
+                           <skip>${solace.integration.test.support.fetch_checkout.skip}</skip>
                            <executable>git</executable>
                            <arguments>
                                <argument>-C</argument>
@@ -100,6 +102,7 @@ The method will integrate this project into your own. This is the include-and-fo
                            <goal>exec</goal>
                        </goals>
                        <configuration>
+                           <skip>${solace.integration.test.support.fetch_checkout.skip}</skip>
                            <executable>git</executable>
                            <arguments>
                                <argument>-C</argument>
