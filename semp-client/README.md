@@ -9,12 +9,25 @@ Generates the Solace SEMP V2 API and also provides a wrapper class to use it.
 ### Updating Your Build
 
 ```xml
-<dependency>
-    <groupId>com.solace.test.integration</groupId>
-    <artifactId>solace-semp-v2-client</artifactId>
-    <version>${solace.integration.test.support.version}</version>
-    <scope>test</scope>
-</dependency>
+<dependencyManagement>
+	<dependencies>
+		<dependency>
+			<groupId>com.solace.test.integration</groupId>
+			<artifactId>solace-integration-test-support-bom</artifactId>
+			<version>${solace.integration.test.support.version}</version>
+			<type>pom</type>
+			<scope>import</scope>
+		</dependency>
+	</dependencies>
+</dependencyManagement>
+
+<dependencies>
+    <dependency>
+        <groupId>com.solace.test.integration</groupId>
+        <artifactId>solace-semp-v2-client</artifactId>
+        <scope>test</scope>
+    </dependency>
+</dependencies>
 ```
 
 ### Using It In Your Application

@@ -13,21 +13,42 @@ The support suite for testing Solace integration projects.
 
 ## Repository Contents
 These are the projects contained within this repository:
+* [Solace Integration Test Support BOM](./bom)
 * [Solace SEMP V2 Client](./semp-client)
 
 ## Usage
 
+### Import BOM
+
+Import the BOM so that you don't have to specify the versions for each project from this repository:
+
+```xml
+<dependencyManagement>
+     <dependencies>
+         <dependency>
+             <groupId>com.solace.test.integration</groupId>
+             <artifactId>solace-integration-test-support-bom</artifactId>
+             <version>${solace.integration.test.support.version}</version>
+             <type>pom</type>
+             <scope>import</scope>
+         </dependency>
+     </dependencies>
+</dependencyManagement>
+```
+
+### Submodule Setup & Management
+
 At the time of writing, this project isn't released into Maven Central, so you will have to install this project locally.
 
-### Integrate It Into Your Project (Recommended)
+#### Integrate It Into Your Project (Recommended)
 
 The method will integrate this project into your own. This is the include-and-forget way to use this project.
 
-#### Prerequisites
+##### Prerequisites
 
 * Have `git` installed and be accessible in your environment.
 
-#### Initial Setup
+##### Initial Setup
 
 1. First, we'll shallowly add this project as a submodule to the root of your project:
     ```shell script
@@ -54,7 +75,7 @@ The method will integrate this project into your own. This is the include-and-fo
     Now add this plugin to your `pom.xml`:
     ```xml
    <build>
-   <plugins>
+       <plugins>
            <plugin>
                <groupId>org.codehaus.mojo</groupId>
                <artifactId>exec-maven-plugin</artifactId>
@@ -156,13 +177,13 @@ The method will integrate this project into your own. This is the include-and-fo
    </profiles>
     ```
 
-#### Upgrading
+##### Upgrading
 
 Just update `solace.integration.test.support.version` to point to the version that you want to use then do a `mvn install`.
 
 If you had correctly followed the setup steps, this will auto-magically update and install this submodule. 
 
-### Install It Directly (Not Recommended)
+#### Install It Directly (Not Recommended)
 
 The trivial way to use this is to just directly clone and install this project directly:
 
