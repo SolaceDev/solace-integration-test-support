@@ -1,0 +1,37 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>com.solace.test.integration</groupId>
+		<artifactId>solace-integration-test-support</artifactId>
+		<version>0.2.1-SNAPSHOT</version>
+	</parent>
+
+	<artifactId>solace-integration-test-support-bom</artifactId>
+	<packaging>pom</packaging>
+
+	<name>Solace Integration Test Support BOM</name>
+	<description>BOM of test utilities for Solace Integration projects</description>
+	<url>https://github.com/${repoName}/solace-integration-test-support/tree/${project.scm.tag}/bom</url>
+
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>com.solace.test.integration</groupId>
+				<artifactId>solace-semp-v2-client</artifactId>
+				<version>${project.version}</version>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>flatten-maven-plugin</artifactId>
+				<configuration>
+					<flattenMode>bom</flattenMode>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+</project>

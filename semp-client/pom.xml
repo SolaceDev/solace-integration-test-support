@@ -100,6 +100,12 @@
 			<artifactId>migbase64</artifactId>
 			<version>2.2</version>
 		</dependency>
+
+		<dependency>
+			<groupId>org.junit.jupiter</groupId>
+			<artifactId>junit-jupiter</artifactId>
+			<scope>test</scope>
+		</dependency>
 	</dependencies>
 
 	<build>
@@ -115,21 +121,26 @@
 			</plugin>
 
 			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-surefire-plugin</artifactId>
-				<version>2.22.2</version>
-				<configuration>
-					<excludes>
-						<!-- workaround for generateApiTests=false in swagger-codegen-maven-plugin not working -->
-						<exclude>**/*ApiTest.java</exclude>
-					</excludes>
-				</configuration>
-			</plugin>
-
-			<plugin>
 				<groupId>io.swagger</groupId>
 				<artifactId>swagger-codegen-maven-plugin</artifactId>
-				<version>2.4.2</version>
+				<version>2.4.21</version>
+				<configuration>
+					<output>${project.build.directory}/generated-sources/swagger</output>
+					<language>java</language>
+					<library>jersey2</library>
+					<generateApiDocumentation>false</generateApiDocumentation>
+					<generateApiTests>false</generateApiTests>
+					<generateModelTests>false</generateModelTests>
+					<generateModelDocumentation>false</generateModelDocumentation>
+					<supportingFilesToGenerate>ApiClient.java,ApiException.java,ApiKeyAuth.java,ApiResponse.java,Authentication.java,Configuration.java,HttpBasicAuth.java,JSON.java,OAuth.java,Pair.java,RFC3339DateFormat.java,StringUtil.java</supportingFilesToGenerate>
+					<configOptions>
+						<sourceFolder>src/main/java</sourceFolder>
+						<interfaceOnly>true</interfaceOnly>
+						<useTags>true</useTags>
+						<dateLibrary>joda</dateLibrary>
+						<hideGenerationTimestamp>true</hideGenerationTimestamp>
+					</configOptions>
+				</configuration>
 				<executions>
 					<execution>
 						<id>generate-semp-action-api</id>
@@ -139,20 +150,9 @@
 						</goals>
 						<configuration>
 							<inputSpec>${project.basedir}/src/main/resources/semp-v2-swagger-action.json</inputSpec>
-							<output>${project.build.directory}/generated-sources/swagger</output>
-							<language>java</language>
 							<apiPackage>com.solace.test.integration.semp.v2.action.api</apiPackage>
 							<modelPackage>com.solace.test.integration.semp.v2.action.model</modelPackage>
-							<library>jersey2</library>
-							<generateApiTests>false</generateApiTests>
 							<modelNamePrefix>Action</modelNamePrefix>
-							<configOptions>
-								<sourceFolder>src/main/java</sourceFolder>
-								<interfaceOnly>true</interfaceOnly>
-								<useTags>true</useTags>
-								<dateLibrary>joda</dateLibrary>
-								<hideGenerationTimestamp>true</hideGenerationTimestamp>
-							</configOptions>
 						</configuration>
 					</execution>
 					<execution>
@@ -163,20 +163,9 @@
 						</goals>
 						<configuration>
 							<inputSpec>${project.basedir}/src/main/resources/semp-v2-swagger-config.json</inputSpec>
-							<output>${project.build.directory}/generated-sources/swagger</output>
-							<language>java</language>
 							<apiPackage>com.solace.test.integration.semp.v2.config.api</apiPackage>
 							<modelPackage>com.solace.test.integration.semp.v2.config.model</modelPackage>
-							<library>jersey2</library>
-							<generateApiTests>false</generateApiTests>
 							<modelNamePrefix>Config</modelNamePrefix>
-							<configOptions>
-								<sourceFolder>src/main/java</sourceFolder>
-								<interfaceOnly>true</interfaceOnly>
-								<useTags>true</useTags>
-								<dateLibrary>joda</dateLibrary>
-								<hideGenerationTimestamp>true</hideGenerationTimestamp>
-							</configOptions>
 						</configuration>
 					</execution>
 					<execution>
@@ -187,20 +176,9 @@
 						</goals>
 						<configuration>
 							<inputSpec>${project.basedir}/src/main/resources/semp-v2-swagger-monitor.json</inputSpec>
-							<output>${project.build.directory}/generated-sources/swagger</output>
-							<language>java</language>
 							<apiPackage>com.solace.test.integration.semp.v2.monitor.api</apiPackage>
 							<modelPackage>com.solace.test.integration.semp.v2.monitor.model</modelPackage>
-							<library>jersey2</library>
-							<generateApiTests>false</generateApiTests>
 							<modelNamePrefix>Monitor</modelNamePrefix>
-							<configOptions>
-								<sourceFolder>src/main/java</sourceFolder>
-								<interfaceOnly>true</interfaceOnly>
-								<useTags>true</useTags>
-								<dateLibrary>joda</dateLibrary>
-								<hideGenerationTimestamp>true</hideGenerationTimestamp>
-							</configOptions>
 						</configuration>
 					</execution>
 				</executions>
