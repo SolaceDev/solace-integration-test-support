@@ -38,6 +38,7 @@ The method will integrate this project into your own. This is the include-and-fo
     ```xml
    <properties>
        <solace.integration.test.support.version>0.2.0</solace.integration.test.support.version>
+       <solace.integration.test.support.clone.skip>false</solace.integration.test.support.clone.skip>
        <solace.integration.test.support.fetch_checkout.skip>false</solace.integration.test.support.fetch_checkout.skip>
        <solace.integration.test.support.install.skip>true</solace.integration.test.support.install.skip>
    </properties>
@@ -67,6 +68,7 @@ The method will integrate this project into your own. This is the include-and-fo
                            <goal>exec</goal>
                        </goals>
                        <configuration>
+                           <skip>${solace.integration.test.support.clone.skip}</skip>
                            <executable>git</executable>
                            <arguments>
                                <argument>submodule</argument>
