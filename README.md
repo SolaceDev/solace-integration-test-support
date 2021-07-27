@@ -7,6 +7,7 @@ The support suite for testing Solace integration projects.
 ## Table of Contents
 * [Repository Contents](#repository-contents)
 * [Usage](#usage)
+* [Testing](#testing)
 * [Release Process](#release-process)
 ---
 
@@ -170,6 +171,18 @@ mvn install
 ```
 
 The main drawback to this method is that you will have to manually manage and release the artifacts yourself. So this is not the recommended way to use this project.
+
+## Testing
+
+To run the tests:
+```shell
+mvn clean verify
+```
+
+To skip the integration tests:
+```shell
+mvn clean verify -DskipITs
+```
 
 ## Release Process
 
