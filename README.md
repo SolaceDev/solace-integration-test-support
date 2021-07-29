@@ -1,3 +1,5 @@
+[![Actions Status](https://github.com/SolaceDev/solace-integration-test-support/workflows/build/badge.svg)](https://github.com/SolaceDev/solace-integration-test-support/actions/workflows/build-test.yml)
+
 # Solace Integration Test Support
 
 ## Overview
