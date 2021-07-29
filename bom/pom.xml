@@ -20,6 +20,12 @@
 				<artifactId>solace-semp-v2-client</artifactId>
 				<version>${project.version}</version>
 			</dependency>
+
+			<dependency>
+				<groupId>com.solace.test.integration</groupId>
+				<artifactId>pubsubplus-testcontainer</artifactId>
+				<version>${project.version}</version>
+			</dependency>
 		</dependencies>
 	</dependencyManagement>
 

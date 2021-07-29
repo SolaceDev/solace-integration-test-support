@@ -15,6 +15,7 @@ The support suite for testing Solace integration projects.
 These are the projects contained within this repository:
 * [Solace Integration Test Support BOM](./bom)
 * [Solace SEMP V2 Client](./semp-client)
+* [Solace PubSub+ Testcontainer](./testcontainer)
 
 ## Usage
 
@@ -196,6 +197,12 @@ mvn install
 The main drawback to this method is that you will have to manually manage and release the artifacts yourself. So this is not the recommended way to use this project.
 
 ## Testing
+
+### Prerequisites
+
+* Docker must be installed
+
+### Running the Tests
 
 To run the tests:
 ```shell
