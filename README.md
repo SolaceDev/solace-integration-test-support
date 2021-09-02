@@ -148,7 +148,7 @@ The method will integrate this project into your own. This is the include-and-fo
                        </goals>
                        <configuration>
                            <skip>${solace.integration.test.support.install.skip}</skip>
-                           <executable>mvn</executable>
+                           <executable>./mvnw</executable>
                            <arguments>
                                <argument>clean</argument>
                                <argument>install</argument>
@@ -183,7 +183,7 @@ The method will integrate this project into your own. This is the include-and-fo
 
 ##### Upgrading
 
-Just update `solace.integration.test.support.version` to point to the version that you want to use then do a `mvn install`.
+Just update `solace.integration.test.support.version` to point to the version that you want to use then do a `./mvnw install`.
 
 If you had correctly followed the setup steps, this will auto-magically update and install this submodule. 
 
@@ -194,7 +194,7 @@ The trivial way to use this is to just directly clone and install this project d
 ```shell script
 git clone https://github.com/SolaceDev/solace-integration-test-support.git
 cd solace-integration-test-support
-mvn install
+./mvnw install
 ```
 
 The main drawback to this method is that you will have to manually manage and release the artifacts yourself. So this is not the recommended way to use this project.
@@ -209,12 +209,12 @@ The main drawback to this method is that you will have to manually manage and re
 
 To run the tests:
 ```shell
-mvn clean verify
+./mvnw clean verify
 ```
 
 To skip the integration tests:
 ```shell
-mvn clean verify -DskipITs
+./mvnw clean verify -DskipITs
 ```
 
 ## Release Process
@@ -222,5 +222,5 @@ mvn clean verify -DskipITs
 Since we're not releasing this project to Maven Central, this command will only tag the release and bump the project to it's next development version.
 
 ```shell script
-mvn -B release:prepare release:perform -DreleaseVersion="${releaseVersion}" -Dtag="${releaseVersion}"
+./mvnw -B release:prepare release:perform -DreleaseVersion="${releaseVersion}" -Dtag="${releaseVersion}"
 ```

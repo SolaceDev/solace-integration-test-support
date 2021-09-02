@@ -39,4 +39,4 @@ jobs:
           distribution: zulu
           java-version: 8
       - name: Build and Run Tests
-        run: mvn clean verify
+        run: ./mvnw clean verify
