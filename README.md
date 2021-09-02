@@ -16,6 +16,7 @@ The support suite for testing Solace integration projects.
 ## Repository Contents
 These are the projects contained within this repository:
 * [Solace Integration Test Support BOM](./bom)
+* [Solace PubSub+ JUnit Jupiter Utility](./junit-jupiter)
 * [Solace SEMP V2 Client](./semp-client)
 * [Solace PubSub+ Testcontainer](./testcontainer)
 
