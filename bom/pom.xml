@@ -26,6 +26,12 @@
 				<artifactId>pubsubplus-testcontainer</artifactId>
 				<version>${project.version}</version>
 			</dependency>
+
+			<dependency>
+				<groupId>com.solace.test.integration</groupId>
+				<artifactId>pubsubplus-junit-jupiter</artifactId>
+				<version>${project.version}</version>
+			</dependency>
 		</dependencies>
 	</dependencyManagement>
 
