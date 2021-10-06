@@ -5,9 +5,7 @@ import org.apache.logging.log4j.core.Appender;
 import org.apache.logging.log4j.core.Logger;
 import org.apache.logging.log4j.core.appender.WriterAppender;
 import org.apache.logging.log4j.core.layout.PatternLayout;
-import org.junit.jupiter.api.extension.AfterTestExecutionCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
-import org.junit.jupiter.api.extension.ExtensionContext.Store;
 import org.junit.jupiter.api.extension.ParameterContext;
 import org.junit.jupiter.api.extension.ParameterResolutionException;
 import org.junit.jupiter.api.extension.ParameterResolver;
@@ -35,7 +33,7 @@ import java.lang.annotation.Target;
  *  }
  * </code></pre>
  */
-public class LogCaptorExtension implements AfterTestExecutionCallback, ParameterResolver {
+public class LogCaptorExtension implements ParameterResolver {
 	private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(LogCaptorExtension.class);
 	private static final ExtensionContext.Namespace NAMESPACE = ExtensionContext.Namespace.create(LogCaptorExtension.class);
 
@@ -47,60 +45,59 @@ public class LogCaptorExtension implements AfterTestExecutionCallback, Parameter
 
 	@Override
 	public Object resolveParameter(ParameterContext parameterContext, ExtensionContext extensionContext) throws ParameterResolutionException {
-		Store store = extensionContext.getStore(NAMESPACE);
-
-		Logger logger = store.getOrComputeIfAbsent(Logger.class, c -> (Logger) LogManager.getLogger(
-				parameterContext.findAnnotation(LogCaptor.class)
-						.map(LogCaptor::value)
-						.orElseThrow(() -> new ParameterResolutionException(String.format("parameter %s is not annotated with %s",
-								parameterContext.getParameter().getName(), LogCaptor.class)))),
-				Logger.class);
-		PipedReader in = store.getOrComputeIfAbsent(PipedReader.class, c -> new PipedReader(), PipedReader.class);
-		Appender appender = store.getOrComputeIfAbsent(Appender.class, c ->
-		{
+		return extensionContext.getStore(NAMESPACE).getOrComputeIfAbsent(LogCaptorResource.class, c -> {
+			Logger logger = (Logger) LogManager.getLogger(
+					parameterContext.findAnnotation(LogCaptor.class)
+							.map(LogCaptor::value)
+							.orElseThrow(() -> new ParameterResolutionException(String.format(
+									"parameter %s is not annotated with %s",
+									parameterContext.getParameter().getName(), LogCaptor.class))));
+			PipedReader in = new PipedReader();
+			Appender appender;
 			try {
-				return WriterAppender.newBuilder()
+				appender = WriterAppender.newBuilder()
 						.setName(logger.getName() + "-LogCaptor")
 						.setTarget(new PipedWriter(in))
 						.setLayout(PatternLayout.createDefaultLayout())
 						.build();
 			} catch (IOException e) {
-				throw new RuntimeException(e);
+				throw new ParameterResolutionException("Failed to create log writer", e);
 			}
-		}, Appender.class);
-		if (!appender.isStarted()) {
 			appender.start();
-		}
-		LOG.info("Adding appender {} to logger {}", appender.getName(), logger.getName());
-		logger.addAppender(appender);
-		return store.getOrComputeIfAbsent(BufferedReader.class, c -> new BufferedReader(in), BufferedReader.class);
-	}
-
-	@Override
-	public void afterTestExecution(ExtensionContext context) throws Exception {
-		Store store = context.getStore(NAMESPACE);
-
-		Logger logger = store.get(Logger.class, Logger.class);
-		Appender appender = store.get(Appender.class, Appender.class);
-
-		if (logger != null && appender != null) {
-			LOG.info("Removing appender {} from logger {}", appender.getName(), logger.getName());
-			logger.removeAppender(appender);
-		}
-
-		if (appender != null) {
-			appender.stop();
-		}
-
-		BufferedReader bufferedReader = store.get(BufferedReader.class, BufferedReader.class);
-		if (bufferedReader != null) {
-			bufferedReader.close();
-		}
+			LOG.info("Adding appender {} to logger {}", appender.getName(), logger.getName());
+			logger.addAppender(appender);
+			BufferedReader bufferedReader = new BufferedReader(in);
+			return new LogCaptorResource(logger, appender, bufferedReader);
+		}, LogCaptorResource.class).getBufferedReader();
 	}
 
 	@Retention(RetentionPolicy.RUNTIME)
 	@Target(ElementType.PARAMETER)
 	public @interface LogCaptor {
 		Class<?> value();
+	}
+
+	private static final class LogCaptorResource implements ExtensionContext.Store.CloseableResource {
+		private final Logger logger;
+		private final Appender appender;
+		private final BufferedReader bufferedReader;
+
+		private LogCaptorResource(Logger logger, Appender appender, BufferedReader bufferedReader) {
+			this.logger = logger;
+			this.appender = appender;
+			this.bufferedReader = bufferedReader;
+		}
+
+		public BufferedReader getBufferedReader() {
+			return bufferedReader;
+		}
+
+		@Override
+		public void close() throws Throwable {
+			LOG.info("Removing appender {} from logger {}", appender.getName(), logger.getName());
+			logger.removeAppender(appender);
+			appender.stop();
+			bufferedReader.close();
+		}
 	}
 }

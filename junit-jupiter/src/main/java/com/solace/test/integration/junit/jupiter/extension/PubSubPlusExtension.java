@@ -9,7 +9,6 @@ import com.solacesystems.jcsmp.JCSMPProperties;
 import com.solacesystems.jcsmp.JCSMPSession;
 import com.solacesystems.jcsmp.Queue;
 import org.apache.commons.lang3.RandomStringUtils;
-import org.junit.jupiter.api.extension.AfterEachCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.api.extension.ExtensionContext.Namespace;
 import org.junit.jupiter.api.extension.ParameterContext;
@@ -38,7 +37,7 @@ import java.util.function.Supplier;
  *  }
  * </code></pre>
  */
-public class PubSubPlusExtension implements AfterEachCallback, ParameterResolver {
+public class PubSubPlusExtension implements ParameterResolver {
 	private static final Logger LOG = LoggerFactory.getLogger(PubSubPlusExtension.class);
 	private static final Namespace NAMESPACE = Namespace.create(PubSubPlusExtension.class);
 	private final Supplier<PubSubPlusContainer> containerSupplier;
@@ -54,23 +53,6 @@ public class PubSubPlusExtension implements AfterEachCallback, ParameterResolver
 	 */
 	public PubSubPlusExtension(Supplier<PubSubPlusContainer> containerSupplier) {
 		this.containerSupplier = containerSupplier;
-	}
-
-	@Override
-	public void afterEach(ExtensionContext context) throws Exception {
-		Queue queue = context.getStore(NAMESPACE).get(Queue.class, Queue.class);
-		JCSMPSession jcsmpSession = context.getStore(NAMESPACE).get(JCSMPSession.class, JCSMPSession.class);
-		if (jcsmpSession != null) {
-			try {
-				if (queue != null) {
-					LOG.info("Deprovisioning queue {}", queue.getName());
-					jcsmpSession.deprovision(queue, JCSMPSession.FLAG_IGNORE_DOES_NOT_EXIST);
-				}
-			} finally {
-				LOG.info("Closing session");
-				jcsmpSession.closeSession();
-			}
-		}
 	}
 
 	@Override
@@ -111,22 +93,23 @@ public class PubSubPlusExtension implements AfterEachCallback, ParameterResolver
 				return jcsmpProperties;
 			}
 
-			JCSMPSession session = extensionContext.getStore(NAMESPACE).getOrComputeIfAbsent(JCSMPSession.class, c -> {
+			JCSMPSession session = extensionContext.getStore(NAMESPACE).getOrComputeIfAbsent(
+					PubSubPlusSessionResource.class, c -> {
 				try {
 					LOG.info("Creating JCSMP session");
 					JCSMPSession jcsmpSession = JCSMPFactory.onlyInstance().createSession(jcsmpProperties);
 					jcsmpSession.connect();
-					return jcsmpSession;
+					return new PubSubPlusSessionResource(jcsmpSession);
 				} catch (JCSMPException e) {
 					throw new ParameterResolutionException("Failed to create JCSMP session", e);
 				}
-			}, JCSMPSession.class);
+			}, PubSubPlusSessionResource.class).getSession();
 
 			if (JCSMPSession.class.isAssignableFrom(paramType)) {
 				return session;
 			}
 
-			return extensionContext.getStore(NAMESPACE).getOrComputeIfAbsent(Queue.class, c -> {
+			return extensionContext.getStore(NAMESPACE).getOrComputeIfAbsent(PubSubPlusQueueResource.class, c -> {
 				Queue queue = JCSMPFactory.onlyInstance().createQueue(RandomStringUtils.randomAlphanumeric(20));
 				try {
 					LOG.info("Provisioning queue {}", queue.getName());
@@ -134,8 +117,8 @@ public class PubSubPlusExtension implements AfterEachCallback, ParameterResolver
 				} catch (JCSMPException e) {
 					throw new ParameterResolutionException("Could not create queue", e);
 				}
-				return queue;
-			}, Queue.class);
+				return new PubSubPlusQueueResource(queue, session);
+			}, PubSubPlusQueueResource.class).getQueue();
 		} else if (SempV2Api.class.isAssignableFrom(paramType)) {
 			return container != null ? createContainerSempV2Api(container) : createDefaultSempV2Api();
 		} else {
@@ -183,6 +166,46 @@ public class PubSubPlusExtension implements AfterEachCallback, ParameterResolver
 		public void close() {
 			LOG.info("Closing PubSub+ container {}", container.getContainerName());
 			container.close();
+		}
+	}
+
+	private static class PubSubPlusSessionResource implements ExtensionContext.Store.CloseableResource {
+		private static final Logger LOG = LoggerFactory.getLogger(PubSubPlusSessionResource.class);
+		private final JCSMPSession session;
+
+		private PubSubPlusSessionResource(JCSMPSession session) {
+			this.session = session;
+		}
+
+		public JCSMPSession getSession() {
+			return session;
+		}
+
+		@Override
+		public void close() {
+			LOG.info("Closing session");
+			session.closeSession();
+		}
+	}
+
+	private static class PubSubPlusQueueResource implements ExtensionContext.Store.CloseableResource {
+		private static final Logger LOG = LoggerFactory.getLogger(PubSubPlusQueueResource.class);
+		private final Queue queue;
+		private final JCSMPSession session;
+
+		private PubSubPlusQueueResource(Queue queue, JCSMPSession session) {
+			this.queue = queue;
+			this.session = session;
+		}
+
+		public Queue getQueue() {
+			return queue;
+		}
+
+		@Override
+		public void close() throws Throwable {
+			LOG.info("Deprovisioning queue {}", queue.getName());
+			session.deprovision(queue, JCSMPSession.FLAG_IGNORE_DOES_NOT_EXIST);
 		}
 	}
 }

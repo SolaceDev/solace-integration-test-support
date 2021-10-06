@@ -1,6 +1,5 @@
 package com.solace.test.integration.junit.jupiter.extension;
 
-import org.junit.jupiter.api.extension.AfterTestExecutionCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.api.extension.ExtensionContext.Namespace;
 import org.junit.jupiter.api.extension.ParameterContext;
@@ -30,21 +29,9 @@ import java.util.concurrent.TimeUnit;
  *  }
  * </code></pre>
  */
-public class ExecutorServiceExtension implements AfterTestExecutionCallback, ParameterResolver {
+public class ExecutorServiceExtension implements ParameterResolver {
 	private static final Namespace NAMESPACE = Namespace.create(ExecutorServiceExtension.class);
 	private static final Logger LOG = LoggerFactory.getLogger(ExecutorServiceExtension.class);
-
-	@Override
-	public void afterTestExecution(ExtensionContext context) throws Exception {
-		ExecutorService executorService = context.getStore(NAMESPACE).get(ExecutorService.class, ExecutorService.class);
-		if (executorService != null) {
-			LOG.info("Shutting down executor service");
-			executorService.shutdownNow();
-			if (!executorService.awaitTermination(1, TimeUnit.MINUTES)) {
-				LOG.error("Could not shutdown executor");
-			}
-		}
-	}
 
 	@Override
 	public boolean supportsParameter(ParameterContext parameterContext, ExtensionContext extensionContext)
@@ -60,8 +47,9 @@ public class ExecutorServiceExtension implements AfterTestExecutionCallback, Par
 				new ParameterResolutionException(String.format("parameter %s is not annotated with %s",
 						parameterContext.getParameter().getName(), ExecSvc.class)));
 
-		return extensionContext.getStore(NAMESPACE).getOrComputeIfAbsent(ExecutorService.class,
+		return extensionContext.getStore(NAMESPACE).getOrComputeIfAbsent(ExecutorServiceResource.class,
 				c -> {
+					ExecutorService executorService;
 					int poolSize = config.poolSize();
 					if (config.scheduled()) {
 						if (poolSize < 1) {
@@ -69,15 +57,16 @@ public class ExecutorServiceExtension implements AfterTestExecutionCallback, Par
 									"Pool size must be > 1 for scheduled executor services");
 						}
 						LOG.info("Creating scheduled thread pool with core pool size {}", poolSize);
-						return Executors.newScheduledThreadPool(poolSize);
+						executorService = Executors.newScheduledThreadPool(poolSize);
 					} else if (poolSize < 1) {
 						LOG.info("Creating cached thread pool");
-						return Executors.newCachedThreadPool();
+						executorService = Executors.newCachedThreadPool();
 					} else {
 						LOG.info("Creating fixed thread pool of size {}", poolSize);
-						return Executors.newFixedThreadPool(poolSize);
+						executorService = Executors.newFixedThreadPool(poolSize);
 					}
-				}, ExecutorService.class);
+					return new ExecutorServiceResource(executorService);
+				}, ExecutorServiceResource.class).getExecutorService();
 	}
 
 	@Retention(RetentionPolicy.RUNTIME)
@@ -85,5 +74,27 @@ public class ExecutorServiceExtension implements AfterTestExecutionCallback, Par
 	public @interface ExecSvc {
 		int poolSize() default 0;
 		boolean scheduled() default false;
+	}
+
+	private static final class ExecutorServiceResource implements ExtensionContext.Store.CloseableResource {
+		private static final Logger LOG = LoggerFactory.getLogger(ExecutorServiceResource.class);
+		private final ExecutorService executorService;
+
+		private ExecutorServiceResource(ExecutorService executorService) {
+			this.executorService = executorService;
+		}
+
+		public ExecutorService getExecutorService() {
+			return executorService;
+		}
+
+		@Override
+		public void close() throws Throwable {
+			LOG.info("Shutting down executor service");
+			executorService.shutdownNow();
+			if (!executorService.awaitTermination(1, TimeUnit.MINUTES)) {
+				LOG.error("Could not shutdown executor");
+			}
+		}
 	}
 }
