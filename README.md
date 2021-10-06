@@ -62,7 +62,7 @@ The method will integrate this project into your own. This is the include-and-fo
 1. In your POM file, add these properties to your `pom.xml`:
     ```xml
    <properties>
-       <solace.integration.test.support.version>0.2.0</solace.integration.test.support.version>
+       <solace.integration.test.support.version>0.5.0</solace.integration.test.support.version>
        <solace.integration.test.support.clone.skip>false</solace.integration.test.support.clone.skip>
        <solace.integration.test.support.fetch_checkout.skip>false</solace.integration.test.support.fetch_checkout.skip>
        <solace.integration.test.support.install.skip>true</solace.integration.test.support.install.skip>
