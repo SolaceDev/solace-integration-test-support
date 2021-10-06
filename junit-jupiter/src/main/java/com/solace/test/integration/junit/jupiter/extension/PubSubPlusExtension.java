@@ -41,14 +41,19 @@ import java.util.function.Supplier;
 public class PubSubPlusExtension implements AfterEachCallback, ParameterResolver {
 	private static final Logger LOG = LoggerFactory.getLogger(PubSubPlusExtension.class);
 	private static final Namespace NAMESPACE = Namespace.create(PubSubPlusExtension.class);
-	private final boolean usePubSubPlusTestcontainer;
+	private final Supplier<PubSubPlusContainer> containerSupplier;
 
 	public PubSubPlusExtension() {
-		this(null);
+		this(PubSubPlusContainer::new);
 	}
 
-	public PubSubPlusExtension(Supplier<Boolean> useTestcontainers) {
-		usePubSubPlusTestcontainer = useTestcontainers != null ? useTestcontainers.get() : true;
+	/**
+	 * Initialize the extension. If the provided PubSub+ container supplier is {@code null}, container provisioning is
+	 * disabled.
+	 * @param containerSupplier the PubSub+ container supplier
+	 */
+	public PubSubPlusExtension(Supplier<PubSubPlusContainer> containerSupplier) {
+		this.containerSupplier = containerSupplier;
 	}
 
 	@Override
@@ -81,13 +86,15 @@ public class PubSubPlusExtension implements AfterEachCallback, ParameterResolver
 	public Object resolveParameter(ParameterContext parameterContext, ExtensionContext extensionContext) throws ParameterResolutionException {
 		Class<?> paramType = parameterContext.getParameter().getType();
 		PubSubPlusContainer container;
-		if (usePubSubPlusTestcontainer) {
+		if (containerSupplier != null) {
 			// Store container in root store so that it's only created once for all test classes.
 			container = extensionContext.getRoot().getStore(NAMESPACE).getOrComputeIfAbsent(PubSubPlusContainerResource.class,
 					c -> {
 						LOG.info("Creating PubSub+ container");
-						PubSubPlusContainer newContainer = new PubSubPlusContainer();
-						newContainer.start();
+						PubSubPlusContainer newContainer = containerSupplier.get();
+						if (!newContainer.isCreated()) {
+							newContainer.start();
+						}
 						containerStartCallback(newContainer);
 						return new PubSubPlusContainerResource(newContainer);
 					}, PubSubPlusContainerResource.class).getContainer();
