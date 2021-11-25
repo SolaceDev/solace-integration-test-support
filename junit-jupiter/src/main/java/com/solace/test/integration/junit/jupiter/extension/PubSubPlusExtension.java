@@ -1,5 +1,6 @@
 package com.solace.test.integration.junit.jupiter.extension;
 
+import com.solace.test.integration.junit.jupiter.extension.pubsubplus.provider.PubSubPlusFileProvider;
 import com.solace.test.integration.semp.v2.SempV2Api;
 import com.solace.test.integration.testcontainer.PubSubPlusContainer;
 import com.solacesystems.jcsmp.EndpointProperties;
@@ -17,6 +18,14 @@ import org.junit.jupiter.api.extension.ParameterResolver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import java.util.Properties;
 import java.util.function.Supplier;
 
 /**
@@ -36,11 +45,21 @@ import java.util.function.Supplier;
  *  	}
  *  }
  * </code></pre>
+ * <p><b>To use an External PubSub+ Broker:</b></p>
+ * <p>Add a {@value #PROPERTIES_FILENAME} resource file to configure external PubSub+ providers:</p>
+ * <pre><code>
+ * providers=com.test.OtherExternalProvider,\
+ * 	com.solace.test.integration.junit.jupiter.extension.pubsubplus.provider.PubSubPlusFileProvider
+ * </code></pre>
+ * <p>External providers must implement {@link ExternalProvider}.</p>
+ * <p>By default, {@link PubSubPlusFileProvider} is enabled as an external provider.</p>
  */
 public class PubSubPlusExtension implements ParameterResolver {
 	private static final Logger LOG = LoggerFactory.getLogger(PubSubPlusExtension.class);
 	private static final Namespace NAMESPACE = Namespace.create(PubSubPlusExtension.class);
+	private static final String PROPERTIES_FILENAME = "pubsubplus-extension.properties";
 	private final Supplier<PubSubPlusContainer> containerSupplier;
+	private final List<ExternalProvider> externalProviders;
 
 	public PubSubPlusExtension() {
 		this(PubSubPlusContainer::new);
@@ -53,6 +72,8 @@ public class PubSubPlusExtension implements ParameterResolver {
 	 */
 	public PubSubPlusExtension(Supplier<PubSubPlusContainer> containerSupplier) {
 		this.containerSupplier = containerSupplier;
+		this.externalProviders = Optional.ofNullable(createExternalProvidersList())
+				.orElse(Collections.singletonList(new PubSubPlusFileProvider()));
 	}
 
 	@Override
@@ -68,7 +89,15 @@ public class PubSubPlusExtension implements ParameterResolver {
 	public Object resolveParameter(ParameterContext parameterContext, ExtensionContext extensionContext) throws ParameterResolutionException {
 		Class<?> paramType = parameterContext.getParameter().getType();
 		PubSubPlusContainer container;
-		if (containerSupplier != null) {
+		if (getValidResolver(extensionContext) != null) {
+			extensionContext.getRoot().getStore(NAMESPACE).getOrComputeIfAbsent(ExternalProvider.class, c -> {
+				ExternalProvider externalProvider = getValidResolver(extensionContext);
+				LOG.info("Initializing external PubSub+ provider {}", externalProvider.getClass().getSimpleName());
+				externalProvider.init(extensionContext);
+				return externalProvider;
+			});
+			container = null;
+		} else if (containerSupplier != null) {
 			// Store container in root store so that it's only created once for all test classes.
 			container = extensionContext.getRoot().getStore(NAMESPACE).getOrComputeIfAbsent(PubSubPlusContainerResource.class,
 					c -> {
@@ -86,8 +115,11 @@ public class PubSubPlusExtension implements ParameterResolver {
 
 		if (Queue.class.isAssignableFrom(paramType) || JCSMPSession.class.isAssignableFrom(paramType) ||
 				JCSMPProperties.class.isAssignableFrom(paramType)) {
-			JCSMPProperties jcsmpProperties = container != null ? createContainerJcsmpProperties(container) :
-					createDefaultJcsmpProperties();
+			JCSMPProperties jcsmpProperties = Optional.ofNullable(container)
+					.map(this::createContainerJcsmpProperties)
+					.orElseGet(() -> Optional.ofNullable(getValidResolver(extensionContext))
+							.map(p -> p.createJCSMPProperties(extensionContext))
+							.orElseGet(this::createDefaultJcsmpProperties));
 
 			if (JCSMPProperties.class.isAssignableFrom(paramType)) {
 				return jcsmpProperties;
@@ -120,7 +152,11 @@ public class PubSubPlusExtension implements ParameterResolver {
 				return new PubSubPlusQueueResource(queue, session);
 			}, PubSubPlusQueueResource.class).getQueue();
 		} else if (SempV2Api.class.isAssignableFrom(paramType)) {
-			return container != null ? createContainerSempV2Api(container) : createDefaultSempV2Api();
+			return Optional.ofNullable(container)
+					.map(this::createContainerSempV2Api)
+					.orElseGet(() -> Optional.ofNullable(getValidResolver(extensionContext))
+							.map(p -> p.createSempV2Api(extensionContext))
+							.orElseGet(this::createDefaultSempV2Api));
 		} else {
 			throw new IllegalArgumentException(String.format("Parameter type %s is not supported", paramType));
 		}
@@ -148,6 +184,78 @@ public class PubSubPlusExtension implements ParameterResolver {
 
 	protected SempV2Api createDefaultSempV2Api() {
 		return new SempV2Api("http://localhost:8080", "admin", "admin");
+	}
+
+	private ExternalProvider getValidResolver(ExtensionContext extensionContext) {
+		return externalProviders.stream()
+				.filter(p -> p.isValid(extensionContext))
+				.findFirst()
+				.orElse(null);
+	}
+
+	private List<ExternalProvider> createExternalProvidersList() {
+		try (InputStream stream = PubSubPlusExtension.class.getClassLoader().getResourceAsStream(PROPERTIES_FILENAME)) {
+			if (stream != null) {
+				Properties properties = new Properties();
+				properties.load(stream);
+				String providersString = properties.getProperty("providers");
+				if (providersString != null) {
+					List<ExternalProvider> providers = new ArrayList<>();
+					for (String providerClassName : providersString.split(",")) {
+						if (providerClassName.trim().isEmpty()) {
+							continue;
+						}
+
+						Class<?> clazz;
+						try {
+							clazz = Class.forName(providerClassName.trim());
+						} catch (ClassNotFoundException e) {
+							throw new IllegalArgumentException(e);
+						}
+						providers.add((ExternalProvider) clazz.getDeclaredConstructor().newInstance());
+					}
+					return providers;
+				}
+			}
+		} catch (IOException | NoSuchMethodException | InstantiationException | IllegalAccessException |
+				InvocationTargetException e) {
+			throw new RuntimeException(e);
+		}
+		return null;
+	}
+
+	/**
+	 * An external provider for a PubSub+ broker.
+	 */
+	public interface ExternalProvider {
+		/**
+		 * Indicates to the PubSub+ extension whether it can use the external provider to get its test broker.
+		 * @param extensionContext extension context
+		 * @return true, if the provider is usable.
+		 */
+		boolean isValid(ExtensionContext extensionContext);
+
+		/**
+		 * Initialize the external provider. Is only invoked once.
+		 * <p><b>TIP:</b> In most cases, any data that needs to be persisted in the {@code init()} should be stored
+		 * in a store on the root context.</p>
+		 * @param extensionContext extension context
+		 */
+		void init(ExtensionContext extensionContext);
+
+		/**
+		 * Create a new JCSMPProperties object for this provider's broker.
+		 * @param extensionContext extension context
+		 * @return a new JCSMPProperties instance
+		 */
+		JCSMPProperties createJCSMPProperties(ExtensionContext extensionContext);
+
+		/**
+		 * Create a new SempV2API object for this provider's broker.
+		 * @param extensionContext extension context
+		 * @return a new SempV2Api instance
+		 */
+		SempV2Api createSempV2Api(ExtensionContext extensionContext);
 	}
 
 	private static class PubSubPlusContainerResource implements ExtensionContext.Store.CloseableResource {
