@@ -3,7 +3,7 @@
 
 	<groupId>com.solace.test.integration</groupId>
 	<artifactId>solace-integration-test-support</artifactId>
-	<version>0.6.0</version>
+	<version>0.6.1-SNAPSHOT</version>
 	<packaging>pom</packaging>
 
 	<name>Solace Integration Test Support</name>
@@ -42,7 +42,7 @@
 		<url>https://github.com/${repoName}/solace-integration-test-support.git</url>
 		<connection>scm:git:git://github.com/${repoName}/solace-integration-test-support.git</connection>
 		<developerConnection>scm:git:git@github.com:${repoName}/solace-integration-test-support.git</developerConnection>
-		<tag>0.6.0</tag>
+		<tag>HEAD</tag>
 	</scm>
 
 	<modules>
