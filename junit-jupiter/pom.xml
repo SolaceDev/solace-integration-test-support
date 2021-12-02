@@ -3,7 +3,7 @@
 	<parent>
 		<groupId>com.solace.test.integration</groupId>
 		<artifactId>solace-integration-test-support</artifactId>
-		<version>0.6.1-SNAPSHOT</version>
+		<version>0.7.0</version>
 	</parent>
 
 	<artifactId>pubsubplus-junit-jupiter</artifactId>
