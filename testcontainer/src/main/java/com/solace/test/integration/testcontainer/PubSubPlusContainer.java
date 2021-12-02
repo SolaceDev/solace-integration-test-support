@@ -4,7 +4,6 @@ import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.utility.DockerImageName;
 
-import java.net.URI;
 import java.util.Arrays;
 
 public class PubSubPlusContainer extends GenericContainer<PubSubPlusContainer> {
@@ -29,7 +28,7 @@ public class PubSubPlusContainer extends GenericContainer<PubSubPlusContainer> {
 	public PubSubPlusContainer(DockerImageName dockerImageName) {
 		super(dockerImageName);
 
-		withExposedPorts(Arrays.stream(Port.values()).map(Port::getContainerPort).toArray(Integer[]::new))
+		withExposedPorts(Arrays.stream(Port.values()).map(Port::getInternalPort).toArray(Integer[]::new))
 				.withAdminUsername(DEFAULT_ADMIN_USERNAME)
 				.withAdminPassword(DEFAULT_ADMIN_PASSWORD)
 				.withMaxConnectionCount(DEFAULT_MAX_CONNECTION_COUNT)
@@ -51,11 +50,11 @@ public class PubSubPlusContainer extends GenericContainer<PubSubPlusContainer> {
 		}
 
 		return String.format("%s://%s:%s", port.getProtocol(), getContainerIpAddress(),
-				getMappedPort(port.getContainerPort()));
+				getMappedPort(port.getInternalPort()));
 	}
 
 	public Integer getSshPort() {
-		return getMappedPort(Port.SSH.getContainerPort());
+		return getMappedPort(Port.SSH.getInternalPort());
 	}
 
 	public PubSubPlusContainer withAdminUsername(String username) {
@@ -90,7 +89,7 @@ public class PubSubPlusContainer extends GenericContainer<PubSubPlusContainer> {
 			this.protocol = protocol;
 		}
 
-		private int getContainerPort() {
+		public int getInternalPort() {
 			return containerPort;
 		}
 

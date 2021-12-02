@@ -17,10 +17,19 @@ import org.junit.jupiter.api.extension.ParameterResolutionException;
 import org.junit.jupiter.api.extension.ParameterResolver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.containers.ToxiproxyContainer;
+import org.testcontainers.containers.ToxiproxyContainer.ContainerProxy;
+import org.testcontainers.utility.DockerImageName;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 import java.lang.reflect.InvocationTargetException;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -45,6 +54,7 @@ import java.util.function.Supplier;
  *  	}
  *  }
  * </code></pre>
+ *
  * <p><b>To use an External PubSub+ Broker:</b></p>
  * <p>Add a {@value #PROPERTIES_FILENAME} resource file to configure external PubSub+ providers:</p>
  * <pre><code>
@@ -53,10 +63,32 @@ import java.util.function.Supplier;
  * </code></pre>
  * <p>External providers must implement {@link ExternalProvider}.</p>
  * <p>By default, {@link PubSubPlusFileProvider} is enabled as an external provider.</p>
+ *
+ * <p><b>Toxiproxy:</b></p>
+ *<pre><code>
+ *	{@literal @}ExtendWith(PubSubPlusExtension.class)
+ *	public class Test {
+ *		{@literal @}Test
+ *		public void testMethod({@literal @}JCSMPProxy JCSMPSession jcsmpSession, {@literal @}JCSMPProxy ToxiproxyContext jcsmpProxyContext) {
+ *			// add a toxic to the JCSMP proxy
+ *			Latency toxic = jcsmpProxyContext.getProxy().toxics()
+ * 					.latency("lag", ToxicDirection.UPSTREAM, TimeUnit.SECONDS.toMillis(5));
+ *
+ * 			// get a host that a container within the docker network can use to access the proxy
+ * 			String toxicJCSMPNetworkHost = String.format("tcp://%s:%s", jcsmpProxyContext.getDockerNetworkAlias(),
+ * 					jcsmpProxyContext.getProxy().getOriginalProxyPort())
+ *
+ *			// Test logic using toxic JCSMP session.
+ *			// Is already preconfigured to use the proxy since the parameter is annotated by {@literal @}JCSMPProxy.
+ *  	}
+ *  }
+ * </code></pre>
  */
 public class PubSubPlusExtension implements ParameterResolver {
 	private static final Logger LOG = LoggerFactory.getLogger(PubSubPlusExtension.class);
 	private static final Namespace NAMESPACE = Namespace.create(PubSubPlusExtension.class);
+	private static final Namespace TOXIPROXY_NAMESPACE = Namespace.create(NAMESPACE, "toxiproxy");
+	private static final String TOXIPROXY_NETWORK_ALIAS = "toxiproxy";
 	private static final String PROPERTIES_FILENAME = "pubsubplus-extension.properties";
 	private final Supplier<PubSubPlusContainer> containerSupplier;
 	private final List<ExternalProvider> externalProviders;
@@ -82,7 +114,8 @@ public class PubSubPlusExtension implements ParameterResolver {
 		return JCSMPProperties.class.isAssignableFrom(paramType) ||
 				JCSMPSession.class.isAssignableFrom(paramType) ||
 				Queue.class.isAssignableFrom(paramType) ||
-				SempV2Api.class.isAssignableFrom(paramType);
+				SempV2Api.class.isAssignableFrom(paramType) ||
+				(ToxiproxyContext.class.isAssignableFrom(paramType) && parameterContext.getParameter().isAnnotationPresent(JCSMPProxy.class));
 	}
 
 	@Override
@@ -113,23 +146,50 @@ public class PubSubPlusExtension implements ParameterResolver {
 			container = null;
 		}
 
-		if (Queue.class.isAssignableFrom(paramType) || JCSMPSession.class.isAssignableFrom(paramType) ||
-				JCSMPProperties.class.isAssignableFrom(paramType)) {
+		if (Queue.class.isAssignableFrom(paramType) ||
+				JCSMPSession.class.isAssignableFrom(paramType) ||
+				JCSMPProperties.class.isAssignableFrom(paramType) ||
+				ToxiproxyContext.class.isAssignableFrom(paramType)) {
 			JCSMPProperties jcsmpProperties = Optional.ofNullable(container)
 					.map(this::createContainerJcsmpProperties)
 					.orElseGet(() -> Optional.ofNullable(getValidResolver(extensionContext))
 							.map(p -> p.createJCSMPProperties(extensionContext))
 							.orElseGet(this::createDefaultJcsmpProperties));
 
-			if (JCSMPProperties.class.isAssignableFrom(paramType)) {
-				return jcsmpProperties;
+			if (ToxiproxyContext.class.isAssignableFrom(paramType) &&
+					parameterContext.getParameter().isAnnotationPresent(JCSMPProxy.class)) {
+				ToxiproxyContainer toxiproxyContainer = createToxiproxyContainer(extensionContext, container);
+				return createJcsmpProxy(extensionContext, toxiproxyContainer, jcsmpProperties, container);
 			}
 
-			JCSMPSession session = extensionContext.getStore(NAMESPACE).getOrComputeIfAbsent(
-					PubSubPlusSessionResource.class, c -> {
+			if (JCSMPProperties.class.isAssignableFrom(paramType)) {
+				if (parameterContext.getParameter().isAnnotationPresent(JCSMPProxy.class)) {
+					ToxiproxyContainer toxiproxyContainer = createToxiproxyContainer(extensionContext, container);
+					ToxiproxyContext jcsmpProxy = createJcsmpProxy(extensionContext, toxiproxyContainer,
+							jcsmpProperties, container);
+					return createToxicJCSMPProperties(jcsmpProxy.getProxy(), jcsmpProperties);
+				} else {
+					return jcsmpProperties;
+				}
+			}
+
+			boolean createToxicSession = JCSMPSession.class.isAssignableFrom(paramType) &&
+					parameterContext.getParameter().isAnnotationPresent(JCSMPProxy.class);
+
+			JCSMPSession session = extensionContext.getStore(createToxicSession ? TOXIPROXY_NAMESPACE : NAMESPACE)
+					.getOrComputeIfAbsent(PubSubPlusSessionResource.class, c -> {
+				JCSMPProperties props;
+				if (createToxicSession) {
+					ToxiproxyContainer toxiproxyContainer = createToxiproxyContainer(extensionContext, container);
+					props = createToxicJCSMPProperties(
+							createJcsmpProxy(extensionContext, toxiproxyContainer, jcsmpProperties, container).getProxy(),
+							jcsmpProperties);
+				} else {
+					props = jcsmpProperties;
+				}
 				try {
 					LOG.info("Creating JCSMP session");
-					JCSMPSession jcsmpSession = JCSMPFactory.onlyInstance().createSession(jcsmpProperties);
+					JCSMPSession jcsmpSession = JCSMPFactory.onlyInstance().createSession(props);
 					jcsmpSession.connect();
 					return new PubSubPlusSessionResource(jcsmpSession);
 				} catch (JCSMPException e) {
@@ -224,6 +284,65 @@ public class PubSubPlusExtension implements ParameterResolver {
 		return null;
 	}
 
+	private ToxiproxyContainer createToxiproxyContainer(ExtensionContext extensionContext,
+														PubSubPlusContainer pubSubPlusContainer) {
+		return extensionContext.getStore(TOXIPROXY_NAMESPACE).getOrComputeIfAbsent(ToxiproxyContainerResource.class, c -> {
+			LOG.info("Creating PubSub+ container");
+			ToxiproxyContainer container = new ToxiproxyContainer(DockerImageName.parse("shopify/toxiproxy:2.1.0"));
+			if (pubSubPlusContainer != null) {
+				container.withNetwork(pubSubPlusContainer.getNetwork()).withNetworkAliases(TOXIPROXY_NETWORK_ALIAS);
+			}
+			if (!container.isCreated()) {
+				container.start();
+			}
+			return new ToxiproxyContainerResource(container);
+			}, ToxiproxyContainerResource.class).getContainer();
+	}
+
+	private ToxiproxyContext createJcsmpProxy(ExtensionContext extensionContext,
+											ToxiproxyContainer toxiproxyContainer,
+											JCSMPProperties jcsmpProperties,
+											PubSubPlusContainer pubSubPlusContainer) {
+		URI clientHost = URI.create(jcsmpProperties.getStringProperty(JCSMPProperties.HOST));
+		return extensionContext.getStore(TOXIPROXY_NAMESPACE)
+				.getOrComputeIfAbsent(ToxiproxyContext.class, c -> {
+					ContainerProxy proxy = pubSubPlusContainer != null ?
+							toxiproxyContainer.getProxy(pubSubPlusContainer, PubSubPlusContainer.Port.SMF.getInternalPort()) :
+							toxiproxyContainer.getProxy(clientHost.getHost(), clientHost.getPort());
+					return new ToxiproxyContext(proxy, TOXIPROXY_NETWORK_ALIAS);
+					}, ToxiproxyContext.class);
+	}
+
+	private JCSMPProperties createToxicJCSMPProperties(ContainerProxy jcsmpProxy, JCSMPProperties jcsmpProperties) {
+		URI clientHost = URI.create(jcsmpProperties.getStringProperty(JCSMPProperties.HOST));
+		JCSMPProperties newJcsmpProperties = (JCSMPProperties) jcsmpProperties.clone();
+		newJcsmpProperties.setProperty(JCSMPProperties.HOST, String.format("%s://%s:%s",
+				clientHost.getScheme(), jcsmpProxy.getContainerIpAddress(), jcsmpProxy.getProxyPort()));
+		return newJcsmpProperties;
+	}
+
+	public static class ToxiproxyContext {
+		private final ContainerProxy proxy;
+		private final String dockerNetworkHost;
+
+		public ToxiproxyContext(ContainerProxy proxy, String dockerNetworkHost) {
+			this.proxy = proxy;
+			this.dockerNetworkHost = dockerNetworkHost;
+		}
+
+		public ContainerProxy getProxy() {
+			return proxy;
+		}
+
+		/**
+		 * The host which this proxy container can be reached from within the same docker network.
+		 * @return Toxiproxy docker network alias
+		 */
+		public String getDockerNetworkAlias() {
+			return dockerNetworkHost;
+		}
+	}
+
 	/**
 	 * An external provider for a PubSub+ broker.
 	 */
@@ -258,21 +377,41 @@ public class PubSubPlusExtension implements ParameterResolver {
 		SempV2Api createSempV2Api(ExtensionContext extensionContext);
 	}
 
-	private static class PubSubPlusContainerResource implements ExtensionContext.Store.CloseableResource {
-		private static final Logger LOG = LoggerFactory.getLogger(PubSubPlusContainerResource.class);
-		private final PubSubPlusContainer container;
+	/**
+	 * A proxy for a toxic JCSMP client.
+	 */
+	@Retention(RetentionPolicy.RUNTIME)
+	@Target(ElementType.PARAMETER)
+	public @interface JCSMPProxy {}
 
+	private static class PubSubPlusContainerResource extends ContainerResource<PubSubPlusContainer> {
 		private PubSubPlusContainerResource(PubSubPlusContainer container) {
+			super(container);
+		}
+	}
+
+	private static class ToxiproxyContainerResource extends ContainerResource<ToxiproxyContainer> {
+		private ToxiproxyContainerResource(ToxiproxyContainer container) {
+			super(container);
+		}
+	}
+
+	private static class ContainerResource<T extends GenericContainer<T>>
+			implements ExtensionContext.Store.CloseableResource {
+		private static final Logger LOG = LoggerFactory.getLogger(ContainerResource.class);
+		private final T container;
+
+		private ContainerResource(T container) {
 			this.container = container;
 		}
 
-		public PubSubPlusContainer getContainer() {
+		public T getContainer() {
 			return container;
 		}
 
 		@Override
 		public void close() {
-			LOG.info("Closing PubSub+ container {}", container.getContainerName());
+			LOG.info("Closing {} container {}", container.getDockerImageName(), container.getContainerName());
 			container.close();
 		}
 	}
