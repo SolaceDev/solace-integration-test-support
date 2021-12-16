@@ -3,7 +3,7 @@
 	<parent>
 		<groupId>com.solace.test.integration</groupId>
 		<artifactId>solace-integration-test-support</artifactId>
-		<version>0.7.1</version>
+		<version>0.7.2-SNAPSHOT</version>
 	</parent>
 
 	<artifactId>pubsubplus-testcontainer</artifactId>
