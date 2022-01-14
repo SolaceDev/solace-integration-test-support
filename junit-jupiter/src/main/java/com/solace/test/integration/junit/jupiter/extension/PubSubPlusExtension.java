@@ -22,21 +22,18 @@ import org.testcontainers.containers.ToxiproxyContainer;
 import org.testcontainers.containers.ToxiproxyContainer.ContainerProxy;
 import org.testcontainers.utility.DockerImageName;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.lang.annotation.Annotation;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
-import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.Properties;
+import java.util.ServiceLoader;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -60,13 +57,16 @@ import java.util.stream.Stream;
  * </code></pre>
  *
  * <p><b>To use an External PubSub+ Broker:</b></p>
- * <p>Add a {@value #PROPERTIES_FILENAME} resource file to configure external PubSub+ providers:</p>
+ * <p>First, implement the {@link ExternalProvider} interface.</p>
+ * <p>Then add the
+ * {@code META-INF/services/com.solace.test.integration.junit.jupiter.extension.PubSubPlusExtension$ExternalProvider}
+ * resource file to configure external PubSub+ providers:</p>
  * <pre><code>
- * providers=com.test.OtherExternalProvider,\
- * 	com.solace.test.integration.junit.jupiter.extension.pubsubplus.provider.PubSubPlusFileProvider
+ * com.test.OtherExternalProvider
+ * com.solace.test.integration.junit.jupiter.extension.pubsubplus.provider.PubSubPlusFileProvider
  * </code></pre>
- * <p>External providers must implement {@link ExternalProvider}.</p>
- * <p>By default, {@link PubSubPlusFileProvider} is enabled as an external provider.</p>
+ * <p>Providers are resolved in order of top-to-bottom.</p>
+ * <p>By default, {@link PubSubPlusFileProvider} is enabled as the only external provider.</p>
  *
  * <p><b>Toxiproxy:</b></p>
  *<pre><code>
@@ -93,7 +93,6 @@ public class PubSubPlusExtension implements ParameterResolver {
 	private static final Namespace NAMESPACE = Namespace.create(PubSubPlusExtension.class);
 	private static final Namespace TOXIPROXY_NAMESPACE = Namespace.create(NAMESPACE, "toxiproxy");
 	private static final String TOXIPROXY_NETWORK_ALIAS = "toxiproxy";
-	private static final String PROPERTIES_FILENAME = "pubsubplus-extension.properties";
 	private final Supplier<PubSubPlusContainer> containerSupplier;
 	private final List<ExternalProvider> externalProviders;
 
@@ -108,8 +107,12 @@ public class PubSubPlusExtension implements ParameterResolver {
 	 */
 	public PubSubPlusExtension(Supplier<PubSubPlusContainer> containerSupplier) {
 		this.containerSupplier = containerSupplier;
-		this.externalProviders = Optional.ofNullable(createExternalProvidersList())
-				.orElse(Collections.singletonList(new PubSubPlusFileProvider()));
+
+		List<ExternalProvider> externalProviders = new ArrayList<>();
+		ServiceLoader.load(ExternalProvider.class).iterator().forEachRemaining(externalProviders::add);
+		this.externalProviders = !externalProviders.isEmpty() ?
+				Collections.unmodifiableList(externalProviders) :
+				Collections.singletonList(new PubSubPlusFileProvider());
 	}
 
 	@Override
@@ -272,37 +275,6 @@ public class PubSubPlusExtension implements ParameterResolver {
 				.filter(p -> p.isValid(extensionContext))
 				.findFirst()
 				.orElse(null);
-	}
-
-	private List<ExternalProvider> createExternalProvidersList() {
-		try (InputStream stream = PubSubPlusExtension.class.getClassLoader().getResourceAsStream(PROPERTIES_FILENAME)) {
-			if (stream != null) {
-				Properties properties = new Properties();
-				properties.load(stream);
-				String providersString = properties.getProperty("providers");
-				if (providersString != null) {
-					List<ExternalProvider> providers = new ArrayList<>();
-					for (String providerClassName : providersString.split(",")) {
-						if (providerClassName.trim().isEmpty()) {
-							continue;
-						}
-
-						Class<?> clazz;
-						try {
-							clazz = Class.forName(providerClassName.trim());
-						} catch (ClassNotFoundException e) {
-							throw new IllegalArgumentException(e);
-						}
-						providers.add((ExternalProvider) clazz.getDeclaredConstructor().newInstance());
-					}
-					return providers;
-				}
-			}
-		} catch (IOException | NoSuchMethodException | InstantiationException | IllegalAccessException |
-				InvocationTargetException e) {
-			throw new RuntimeException(e);
-		}
-		return null;
 	}
 
 	private ToxiproxyContainer createToxiproxyContainer(ExtensionContext extensionContext,
