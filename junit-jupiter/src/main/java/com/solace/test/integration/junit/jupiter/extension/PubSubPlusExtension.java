@@ -24,6 +24,7 @@ import org.testcontainers.utility.DockerImageName;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.annotation.Annotation;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -31,11 +32,14 @@ import java.lang.annotation.Target;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * <p>Junit 5 extension for using Solace PubSub+.</p>
@@ -109,18 +113,32 @@ public class PubSubPlusExtension implements ParameterResolver {
 	}
 
 	@Override
-	public boolean supportsParameter(ParameterContext parameterContext, ExtensionContext extensionContext) throws ParameterResolutionException {
-		Class<?> paramType = parameterContext.getParameter().getType();
+	public boolean supportsParameter(ParameterContext parameterContext, ExtensionContext extensionContext)
+			throws ParameterResolutionException {
+		return supportsParameter(parameterContext.getParameter().getType(),
+				parameterContext.getParameter().getAnnotations());
+	}
+
+	private boolean supportsParameter(Class<?> paramType, Annotation... annotations)
+			throws ParameterResolutionException {
 		return JCSMPProperties.class.isAssignableFrom(paramType) ||
 				JCSMPSession.class.isAssignableFrom(paramType) ||
 				Queue.class.isAssignableFrom(paramType) ||
 				SempV2Api.class.isAssignableFrom(paramType) ||
-				(ToxiproxyContext.class.isAssignableFrom(paramType) && parameterContext.getParameter().isAnnotationPresent(JCSMPProxy.class));
+				(ToxiproxyContext.class.isAssignableFrom(paramType) &&
+						Arrays.stream(annotations).anyMatch(a -> a instanceof JCSMPProxy));
 	}
 
 	@Override
-	public Object resolveParameter(ParameterContext parameterContext, ExtensionContext extensionContext) throws ParameterResolutionException {
-		Class<?> paramType = parameterContext.getParameter().getType();
+	public Object resolveParameter(ParameterContext parameterContext, ExtensionContext extensionContext)
+			throws ParameterResolutionException {
+		return resolveParameter(extensionContext,
+				parameterContext.getParameter().getType(),
+				parameterContext.getParameter().getAnnotations());
+	}
+
+	private Object resolveParameter(ExtensionContext extensionContext, Class<?> paramType, Annotation... annotations)
+			throws ParameterResolutionException {
 		PubSubPlusContainer container;
 		if (getValidResolver(extensionContext) != null) {
 			extensionContext.getRoot().getStore(NAMESPACE).getOrComputeIfAbsent(ExternalProvider.class, c -> {
@@ -132,7 +150,8 @@ public class PubSubPlusExtension implements ParameterResolver {
 			container = null;
 		} else if (containerSupplier != null) {
 			// Store container in root store so that it's only created once for all test classes.
-			container = extensionContext.getRoot().getStore(NAMESPACE).getOrComputeIfAbsent(PubSubPlusContainerResource.class,
+			container = extensionContext.getRoot().getStore(NAMESPACE).getOrComputeIfAbsent(
+					PubSubPlusContainerResource.class,
 					c -> {
 						LOG.info("Creating PubSub+ container");
 						PubSubPlusContainer newContainer = containerSupplier.get();
@@ -157,13 +176,13 @@ public class PubSubPlusExtension implements ParameterResolver {
 							.orElseGet(this::createDefaultJcsmpProperties));
 
 			if (ToxiproxyContext.class.isAssignableFrom(paramType) &&
-					parameterContext.getParameter().isAnnotationPresent(JCSMPProxy.class)) {
+					Arrays.stream(annotations).anyMatch(a -> a instanceof JCSMPProxy)) {
 				ToxiproxyContainer toxiproxyContainer = createToxiproxyContainer(extensionContext, container);
 				return createJcsmpProxy(extensionContext, toxiproxyContainer, jcsmpProperties, container);
 			}
 
 			if (JCSMPProperties.class.isAssignableFrom(paramType)) {
-				if (parameterContext.getParameter().isAnnotationPresent(JCSMPProxy.class)) {
+				if (Arrays.stream(annotations).anyMatch(a -> a instanceof JCSMPProxy)) {
 					ToxiproxyContainer toxiproxyContainer = createToxiproxyContainer(extensionContext, container);
 					ToxiproxyContext jcsmpProxy = createJcsmpProxy(extensionContext, toxiproxyContainer,
 							jcsmpProperties, container);
@@ -174,7 +193,7 @@ public class PubSubPlusExtension implements ParameterResolver {
 			}
 
 			boolean createToxicSession = JCSMPSession.class.isAssignableFrom(paramType) &&
-					parameterContext.getParameter().isAnnotationPresent(JCSMPProxy.class);
+					Arrays.stream(annotations).anyMatch(a -> a instanceof JCSMPProxy);
 
 			JCSMPSession session = extensionContext.getStore(createToxicSession ? TOXIPROXY_NAMESPACE : NAMESPACE)
 					.getOrComputeIfAbsent(PubSubPlusSessionResource.class, c -> {
@@ -212,11 +231,13 @@ public class PubSubPlusExtension implements ParameterResolver {
 				return new PubSubPlusQueueResource(queue, session);
 			}, PubSubPlusQueueResource.class).getQueue();
 		} else if (SempV2Api.class.isAssignableFrom(paramType)) {
-			return Optional.ofNullable(container)
-					.map(this::createContainerSempV2Api)
-					.orElseGet(() -> Optional.ofNullable(getValidResolver(extensionContext))
-							.map(p -> p.createSempV2Api(extensionContext))
-							.orElseGet(this::createDefaultSempV2Api));
+			return extensionContext.getStore(NAMESPACE).getOrComputeIfAbsent(SempV2Api.class, c ->
+					Optional.ofNullable(container)
+							.map(this::createContainerSempV2Api)
+							.orElseGet(() -> Optional.ofNullable(getValidResolver(extensionContext))
+									.map(p -> p.createSempV2Api(extensionContext))
+									.orElseGet(this::createDefaultSempV2Api)
+							), SempV2Api.class);
 		} else {
 			throw new IllegalArgumentException(String.format("Parameter type %s is not supported", paramType));
 		}
@@ -319,6 +340,71 @@ public class PubSubPlusExtension implements ParameterResolver {
 		newJcsmpProperties.setProperty(JCSMPProperties.HOST, String.format("%s://%s:%s",
 				clientHost.getScheme(), jcsmpProxy.getContainerIpAddress(), jcsmpProxy.getProxyPort()));
 		return newJcsmpProperties;
+	}
+
+	@SuppressWarnings("unchecked")
+	private <T> T getParameterForExternalUse(ExtensionContext extensionContext, Class<T> paramType,
+											 Annotation... annotations) {
+		if (supportsParameter(JCSMPProperties.class, annotations)) {
+			return (T) resolveParameter(extensionContext, paramType, annotations);
+		} else {
+			throw new IllegalArgumentException(String.format(
+					"Parameter is not supported. (type: %s, annotations: [%s])",
+					paramType.getSimpleName(),
+					Stream.of(annotations).map(Annotation::toString).collect(Collectors.joining(", "))));
+		}
+	}
+
+	/**
+	 * Should only be used by other JUnit 5 extensions. Use JUnit test parameters to get the JCSMP properties
+	 * within tests.
+	 * @param extensionContext extension context
+	 * @param annotations annotations to apply
+	 * @return the existing or new JCSMPProperties
+	 */
+	public JCSMPProperties getJCSMPProperties(ExtensionContext extensionContext, Annotation... annotations) {
+		return getParameterForExternalUse(extensionContext, JCSMPProperties.class, annotations);
+	}
+
+	/**
+	 * Should only be used by other JUnit 5 extensions. Use JUnit test parameters to get the session within tests.
+	 * @param extensionContext extension context
+	 * @param annotations annotations to apply
+	 * @return the existing or new JCSMP session
+	 */
+	public JCSMPSession getJCSMPSession(ExtensionContext extensionContext, Annotation... annotations) {
+		return getParameterForExternalUse(extensionContext, JCSMPSession.class, annotations);
+	}
+
+	/**
+	 * Should only be used by other JUnit 5 extensions. Use JUnit test parameters to get the queue within tests.
+	 * @param extensionContext extension context
+	 * @param annotations annotations to apply
+	 * @return the existing or new queue
+	 */
+	public Queue getQueue(ExtensionContext extensionContext, Annotation... annotations) {
+		return getParameterForExternalUse(extensionContext, Queue.class, annotations);
+	}
+
+	/**
+	 * Should only be used by other JUnit 5 extensions. Use JUnit test parameters to get the SempV2Api within tests.
+	 * @param extensionContext extension context
+	 * @param annotations annotations to apply
+	 * @return The existing or new SempV2Api
+	 */
+	public SempV2Api getSempV2Api(ExtensionContext extensionContext, Annotation... annotations) {
+		return getParameterForExternalUse(extensionContext, SempV2Api.class, annotations);
+	}
+
+	/**
+	 * Should only be used by other JUnit 5 extensions. Use JUnit test parameters to get the ToxiproxyContext
+	 * within tests.
+	 * @param extensionContext extension context
+	 * @param annotations annotations to apply
+	 * @return The existing or new Toxiproxy context
+	 */
+	public ToxiproxyContext getToxiproxyContext(ExtensionContext extensionContext, Annotation... annotations) {
+		return getParameterForExternalUse(extensionContext, ToxiproxyContext.class, annotations);
 	}
 
 	public static class ToxiproxyContext {
@@ -430,7 +516,7 @@ public class PubSubPlusExtension implements ParameterResolver {
 
 		@Override
 		public void close() {
-			LOG.info("Closing session");
+			LOG.info("Closing session {}", session.getProperty(JCSMPProperties.CLIENT_NAME));
 			session.closeSession();
 		}
 	}
