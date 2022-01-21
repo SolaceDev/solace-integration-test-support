@@ -3,7 +3,7 @@
 	<parent>
 		<groupId>com.solace.test.integration</groupId>
 		<artifactId>solace-integration-test-support</artifactId>
-		<version>0.8.1-SNAPSHOT</version>
+		<version>0.9.0</version>
 	</parent>
 
 	<artifactId>solace-semp-v2-client</artifactId>
