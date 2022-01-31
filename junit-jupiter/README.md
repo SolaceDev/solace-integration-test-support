@@ -49,7 +49,11 @@ By default a Solace PubSub+ container will be auto-provisioned only if necessary
 
 The lifecycle of resources (e.g. sessions and endpoints) created through this extension are bound to the earliest JUnit context that they were defined in.
 
-e.g. if the earliest definition of a resource was defined as a parameter of a `@Test` method, then that resource's lifecycle is bound to the test, and will be cleaned up after the test completes. Similarly, if the resource was defined as a parameter of a `@BeforeAll` method, then the resource's lifecycle is bound to the class, and will be cleaned up after the test class completes. Now if you had the same resource defined as parameters of both `@BeforeAll` and `@Test`, then both methods will use the same resource, and its lifecycle would be bound to the test class (i.e. the earliest definition of the resource).
+e.g.:
+
+* If a resource was only defined as a parameter of a `@Test` method, then that resource's lifecycle is bound to the test, and will be cleaned up after the test completes.
+* If a resource was only defined as a parameter of a `@BeforeAll` method, then the resource's lifecycle is bound to the class, and will be cleaned up after the test class completes.
+* If you had the same resource defined as parameters of both `@BeforeAll` and `@Test`, then both methods will use the same resource, and its lifecycle would be bound to the test class (i.e. the earliest definition of the resource).
 
 Note that the only exception to this is the PubSub+ broker container. Which, if created, is bound to JUnit's root context. i.e. it will be cleaned up with the JVM.
 
@@ -69,7 +73,32 @@ public class Test {
 
 ### To use an External PubSub+ Broker
 
-First, implement the `PubSubPlusExtension.ExternalProvider` interface.
+First, implement the `PubSubPlusExtension.ExternalProvider` interface. e.g.:
+
+```java
+public class OtherExternalProvider PubSubPlusExtension.ExternalProvider {
+	@Override
+	public boolean isValid(ExtensionContext extensionContext) {
+		// Return true to inform the PubSub+ extension if it can use this external
+		// provider to get its test broker
+	}
+	
+	@Override
+	public void init(ExtensionContext extensionContext) {
+		// Initialize this external provider. Is only invoked once
+	}
+	
+	@Override
+	public JCSMPProperties createJCSMPProperties(ExtensionContext extensionContext) {
+		// Create a new JCSMPProperties instance pointing to your externally managed broker
+	}
+	
+	@Override
+	public SempV2Api createSempV2Api(ExtensionContext extensionContext) {
+		// Create a new SempV2API instance pointing to your externally managed broker
+	}
+}
+```
 
 Then add the `META-INF/services/com.solace.test.integration.junit.jupiter.extension.PubSubPlusExtension$ExternalProvider` resource file to configure external PubSub+ providers:
 
@@ -78,19 +107,45 @@ com.test.OtherExternalProvider
 com.solace.test.integration.junit.jupiter.extension.pubsubplus.provider.PubSubPlusFileProvider
 ```
  
-Providers are resolved in order of top-to-bottom.
+Note: Providers are resolved in order of top-to-bottom.
 
 By default, `PubSubPlusFileProvider` is enabled as the only external provider.
 
 ### Customize PubSub+ Docker Container
 
-Either extend `SimpleContainerProvider` or implement `PubSubPlusExtension.ContainerProvider`. Then add the `META-INF/services/com.solace.test.integration.junit.jupiter.extension.PubSubPlusExtension$ContainerProvider` resource file:
+Either extend `SimpleContainerProvider` or implement `PubSubPlusExtension.ContainerProvider`. e.g.:
+```java
+public class OtherContainerProvider implements PubSubPlusExtension.ContainerProvider {
+	@Override
+	public Supplier<PubSubPlusContainer> containerSupplier(ExtensionContext extensionContext) {
+		// return a supplier which creates a new PubSubPlusContainer
+		return PubSubPlusContainer::new;
+	}
+	
+	@Override
+	public void containerPostStart(ExtensionContext extensionContext, PubSubPlusContainer container) {
+		// optionally do something after the container starts
+	}
+	
+	@Override
+	public JCSMPProperties createJcsmpProperties(ExtensionContext extensionContext, PubSubPlusContainer container) {
+		// create a new JCSMPProperties instance for the given PubSub+ container
+	}
+	
+	@Override
+	public SempV2Api createSempV2Api(ExtensionContext extensionContext, PubSubPlusContainer container) {
+		// create a new SempV2API  instance for the given PubSub+ container
+	}
+}
+```
+
+Then add the `META-INF/services/com.solace.test.integration.junit.jupiter.extension.PubSubPlusExtension$ContainerProvider` resource file that contains the full reference to your new `ContainerProvider` class:
 
 ```
 com.test.OtherContainerProvider
 ```
  
-Only one container provider is supported. If multiple are detected, the first found provider will be used.
+Note: Only one container provider is supported. If multiple are detected, the first found provider will be used.
 
 By default, `SimpleContainerProvider` is enabled as the container provider.
 
