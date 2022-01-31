@@ -4,9 +4,18 @@
 
 Utility for using Solace PubSub+ in JUnit Jupiter.
 
-## Usage
+## Table of Contents
+* [Updating Your Build](#updating-your-build)
+* [Using the PubSub+ Extension](#using-the-pubsub-extension)
+  * [PubSub+ Resource Lifecycle](#pubsub-resource-lifecycle)
+  * [Basic Usage](#basic-usage)
+  * [To use an External PubSub+ Broker](#to-use-an-external-pubsub-broker)
+  * [Customize PubSub+ Docker Container](#customize-pubsub-docker-container)
+  * [Toxiproxy Integration](#toxiproxy-integration)
+* [Other Extensions](#other-extensions)
 
-### Updating Your Build
+
+## Updating Your Build
 
 ```xml
 <dependencyManagement>
@@ -30,11 +39,88 @@ Utility for using Solace PubSub+ in JUnit Jupiter.
 </dependencies>
 ```
 
-### Using It In Your Application
+## Using the PubSub+ Extension
+
+The `PubSubPlusExtension` is the Junit 5 extension for using Solace PubSub+.
+
+By default a Solace PubSub+ container will be auto-provisioned only if necessary.
+
+### PubSub+ Resource Lifecycle
+
+The lifecycle of resources (e.g. sessions and endpoints) created through this extension are bound to the earliest JUnit context that they were defined in.
+
+e.g. if the earliest definition of a resource was defined as a parameter of a `@Test` method, then that resource's lifecycle is bound to the test, and will be cleaned up after the test completes. Similarly, if the resource was defined as a parameter of a `@BeforeAll` method, then the resource's lifecycle is bound to the class, and will be cleaned up after the test class completes. Now if you had the same resource defined as parameters of both `@BeforeAll` and `@Test`, then both methods will use the same resource, and its lifecycle would be bound to the test class (i.e. the earliest definition of the resource).
+
+Note that the only exception to this is the PubSub+ broker container. Which, if created, is bound to JUnit's root context. i.e. it will be cleaned up with the JVM.
+
+### Basic Usage
+
+```java
+@ExtendWith(PubSubPlusExtension.class)
+public class Test {
+    // At least one of these arguments must be defined on the test function for the session and broker to be
+    // provisioned.
+    @Test
+    public void testMethod(JCSMPSession session, SempV2Api sempV2Api, Queue queue, JCSMPProperties properties) {
+        // Test logic using JCSMP
+    }
+}
+```
+
+### To use an External PubSub+ Broker
+
+First, implement the `PubSubPlusExtension.ExternalProvider` interface.
+
+Then add the `META-INF/services/com.solace.test.integration.junit.jupiter.extension.PubSubPlusExtension$ExternalProvider` resource file to configure external PubSub+ providers:
+
+```
+com.test.OtherExternalProvider
+com.solace.test.integration.junit.jupiter.extension.pubsubplus.provider.PubSubPlusFileProvider
+```
+ 
+Providers are resolved in order of top-to-bottom.
+
+By default, `PubSubPlusFileProvider` is enabled as the only external provider.
+
+### Customize PubSub+ Docker Container
+
+Either extend `SimpleContainerProvider` or implement `PubSubPlusExtension.ContainerProvider`. Then add the `META-INF/services/com.solace.test.integration.junit.jupiter.extension.PubSubPlusExtension$ContainerProvider` resource file:
+
+```
+com.test.OtherContainerProvider
+```
+ 
+Only one container provider is supported. If multiple are detected, the first found provider will be used.
+
+By default, `SimpleContainerProvider` is enabled as the container provider.
+
+### Toxiproxy Integration
+
+To retrieve a proxied JCSMP session, annotate your `JCSMPSession` parameter with `@JCSMPProxy`. To get the proxy itself, add the `ToxiproxyContext` parameter that's also annotated with `@JCSMPProxy`:
+
+```java
+@ExtendWith(PubSubPlusExtension.class)
+public class Test {
+    @Test
+    public void testMethod(@JCSMPProxy JCSMPSession jcsmpSession, @JCSMPProxy ToxiproxyContext jcsmpProxyContext) {
+        // add a toxic to the JCSMP proxy
+        Latency toxic = jcsmpProxyContext.getProxy().toxics()
+                .latency("lag", ToxicDirection.UPSTREAM, TimeUnit.SECONDS.toMillis(5));
+
+        // get a host that a container within the docker network can use to access the proxy
+        String toxicJCSMPNetworkHost = String.format("tcp://%s:%s", jcsmpProxyContext.getDockerNetworkAlias(),
+                jcsmpProxyContext.getProxy().getOriginalProxyPort())
+
+        // Test logic using toxic JCSMP session.
+        // Is already preconfigured to use the proxy since the parameter is annotated by @JCSMPProxy.
+    }
+}
+```
+
+## Other Extensions
 
 This project provides a number of JUnit extensions:
 
 * [ExecutorServiceExtension](src/main/java/com/solace/test/integration/junit/jupiter/extension/ExecutorServiceExtension.java)
 * [LogCaptorExtension](src/main/java/com/solace/test/integration/junit/jupiter/extension/LogCaptorExtension.java)
-* [PubSubPlusExtension](src/main/java/com/solace/test/integration/junit/jupiter/extension/PubSubPlusExtension.java)
 
