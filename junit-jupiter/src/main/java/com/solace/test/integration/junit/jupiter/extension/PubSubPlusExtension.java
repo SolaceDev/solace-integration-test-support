@@ -42,10 +42,24 @@ import java.util.stream.Stream;
 
 /**
  * <p>Junit 5 extension for using Solace PubSub+.</p>
- * <p>By default a Solace PubSub+ container will be auto-provisioned as necessary.
- * Can be sub-classed to use an externally managed PubSub+ container.</p>
- * <p>Resources (e.g. sessions and endpoints) created through this extension are disconnected and/or deprovisioned from
- * the broker between tests.</p>
+ * <p>By default a Solace PubSub+ container will be auto-provisioned only if necessary.</p>
+ *
+ * <h1>PubSub+ Resource Lifecycle</h1>
+ * <p>The lifecycle of resources (e.g. sessions and endpoints) created through this extension are bound to the earliest
+ * JUnit context that they were defined in.</p>
+ * <p>e.g.:</p>
+ * <ul>
+ *     <li>if a resource was only defined as a parameter of a {@code @Test} method,
+ *     then that resource's lifecycle is bound to the test, and will be cleaned up after the test completes.</li>
+ *     <li>If a resource was only defined as a parameter of a {@code @BeforeAll} method, then the resource's
+ *     lifecycle is bound to the class, and will be cleaned up after the test class completes.</li>
+ *     <li>If you had the same resource defined as parameters of both {@code @BeforeAll} and {@code @Test}, then
+ *     both methods will use the same resource, and its lifecycle would be bound to the test class (i.e. the earliest
+ *     definition of the resource).</li>
+ * </ul>
+ * <p>Note that the only exception to this is the PubSub+ broker container. Which, if created, is bound to JUnit's
+ * root context. i.e. it will be cleaned up with the JVM.</p>
+ *
  * <H1>Basic Usage:</h1>
  * <pre><code>
  * {@literal @}ExtendWith(PubSubPlusExtension.class)
@@ -80,7 +94,10 @@ import java.util.stream.Stream;
  * <p>Only one container provider is supported. If multiple are detected, the first found provider will be used.</p>
  * <p>By default, {@link SimpleContainerProvider} is enabled as the container provider.</p>
  *
- * <h1>Toxiproxy:</h1>
+ * <h1>Toxiproxy Integration:</h1>
+ * <p>To retrieve a proxied JCSMP session, annotate your {@code JCSMPSession} parameter with {@code @JCSMPProxy}.
+ * To get the proxy itself, add the {@code ToxiproxyContext} parameter that's also annotated with {@code @JCSMPProxy}:
+ * </p>
  *<pre><code>
  * {@literal @}ExtendWith(PubSubPlusExtension.class)
  * public class Test {
