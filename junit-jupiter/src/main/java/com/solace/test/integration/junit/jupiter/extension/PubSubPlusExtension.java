@@ -80,6 +80,8 @@ import java.util.stream.Stream;
  * </code></pre>
  * <p>{@code JCSMPProperties} & {@code JCSMPSession} parameters can be annotated with
  * {@link JCSMPProperty @JCSMPProperty} to override individual JCSMP properties.</p>
+ * <p>If the test needs multiple parameters of the same type (e.g. 2 {@code JCSMPSession}s),
+ * use the {@link Store @Store} annotation.</p>
  *
  * <h1>To use an External PubSub+ Broker:</h1>
  * <p>First, implement the {@link ExternalProvider} interface.</p>
@@ -128,8 +130,8 @@ import java.util.stream.Stream;
  */
 public class PubSubPlusExtension implements ParameterResolver {
 	private static final Logger LOG = LoggerFactory.getLogger(PubSubPlusExtension.class);
-	private static final Namespace NAMESPACE = Namespace.create(PubSubPlusExtension.class);
-	private static final Namespace TOXIPROXY_NAMESPACE = Namespace.create(NAMESPACE, "toxiproxy");
+	private static final Namespace EXT_NAMESPACE = Namespace.create(PubSubPlusExtension.class);
+	private static final String TOXIPROXY_NAMESPACE_POSTFIX = "toxiproxy";
 	private static final String TOXIPROXY_NETWORK_ALIAS = "toxiproxy";
 	private static final ContainerProvider CONTAINER_PROVIDER;
 	private static final List<ExternalProvider> EXTERNAL_PROVIDERS;
@@ -176,7 +178,7 @@ public class PubSubPlusExtension implements ParameterResolver {
 			throws ParameterResolutionException {
 		PubSubPlusContainer container;
 		if (getValidResolver(extensionContext) != null) {
-			extensionContext.getRoot().getStore(NAMESPACE).getOrComputeIfAbsent(ExternalProvider.class, key -> {
+			extensionContext.getRoot().getStore(EXT_NAMESPACE).getOrComputeIfAbsent(ExternalProvider.class, key -> {
 				ExternalProvider externalProvider = getValidResolver(extensionContext);
 				LOG.info("Initializing external PubSub+ provider {}", externalProvider.getClass().getSimpleName());
 				externalProvider.init(extensionContext);
@@ -185,7 +187,7 @@ public class PubSubPlusExtension implements ParameterResolver {
 			container = null;
 		} else {
 			// Store container in root store so that it's only created once for all test classes.
-			container = extensionContext.getRoot().getStore(NAMESPACE).getOrComputeIfAbsent(
+			container = extensionContext.getRoot().getStore(EXT_NAMESPACE).getOrComputeIfAbsent(
 					PubSubPlusContainerResource.class,
 					key -> {
 						LOG.info("Creating PubSub+ container");
@@ -201,6 +203,13 @@ public class PubSubPlusExtension implements ParameterResolver {
 					}, PubSubPlusContainerResource.class).getContainer();
 		}
 
+		Namespace parameterNamespace = EXT_NAMESPACE.append(Arrays.stream(annotations)
+				.filter(a -> a instanceof Store)
+				.map(a -> ((Store) a).value())
+				.findFirst()
+				.orElse(Store.DEFAULT));
+		Namespace toxiproxyNamespace = parameterNamespace.append(TOXIPROXY_NAMESPACE_POSTFIX);
+
 		if (Queue.class.isAssignableFrom(paramType) ||
 				JCSMPSession.class.isAssignableFrom(paramType) ||
 				JCSMPProperties.class.isAssignableFrom(paramType) ||
@@ -213,16 +222,19 @@ public class PubSubPlusExtension implements ParameterResolver {
 
 			if (ToxiproxyContext.class.isAssignableFrom(paramType) &&
 					Arrays.stream(annotations).anyMatch(a -> a instanceof JCSMPProxy)) {
-				ToxiproxyContainer toxiproxyContainer = createToxiproxyContainer(extensionContext, container);
-				return createJcsmpProxy(extensionContext, toxiproxyContainer, jcsmpProperties, container);
+				ToxiproxyContainer toxiproxyContainer = createToxiproxyContainer(extensionContext, toxiproxyNamespace,
+						container);
+				return createJcsmpProxy(extensionContext, toxiproxyNamespace, toxiproxyContainer, jcsmpProperties,
+						container);
 			}
 
 			if (JCSMPProperties.class.isAssignableFrom(paramType)) {
 				applyJCSMPPropertiesOverride(jcsmpProperties, annotations);
 				if (Arrays.stream(annotations).anyMatch(a -> a instanceof JCSMPProxy)) {
-					ToxiproxyContainer toxiproxyContainer = createToxiproxyContainer(extensionContext, container);
-					ToxiproxyContext jcsmpProxy = createJcsmpProxy(extensionContext, toxiproxyContainer,
-							jcsmpProperties, container);
+					ToxiproxyContainer toxiproxyContainer = createToxiproxyContainer(extensionContext,
+							toxiproxyNamespace, container);
+					ToxiproxyContext jcsmpProxy = createJcsmpProxy(extensionContext, toxiproxyNamespace,
+							toxiproxyContainer, jcsmpProperties, container);
 					return createToxicJCSMPProperties(jcsmpProxy.getProxy(), jcsmpProperties);
 				} else {
 					return jcsmpProperties;
@@ -232,14 +244,14 @@ public class PubSubPlusExtension implements ParameterResolver {
 			boolean createToxicSession = JCSMPSession.class.isAssignableFrom(paramType) &&
 					Arrays.stream(annotations).anyMatch(a -> a instanceof JCSMPProxy);
 
-			JCSMPSession session = extensionContext.getStore(createToxicSession ? TOXIPROXY_NAMESPACE : NAMESPACE)
+			JCSMPSession session = extensionContext.getStore(createToxicSession ? toxiproxyNamespace : parameterNamespace)
 					.getOrComputeIfAbsent(PubSubPlusSessionResource.class, key -> {
 				JCSMPProperties props;
 				if (createToxicSession) {
-					ToxiproxyContainer toxiproxyContainer = createToxiproxyContainer(extensionContext, container);
-					props = createToxicJCSMPProperties(
-							createJcsmpProxy(extensionContext, toxiproxyContainer, jcsmpProperties, container).getProxy(),
-							jcsmpProperties);
+					ToxiproxyContainer toxiproxyContainer = createToxiproxyContainer(extensionContext,
+							toxiproxyNamespace, container);
+					props = createToxicJCSMPProperties(createJcsmpProxy(extensionContext, toxiproxyNamespace,
+									toxiproxyContainer, jcsmpProperties, container).getProxy(), jcsmpProperties);
 				} else {
 					props = jcsmpProperties;
 				}
@@ -258,7 +270,8 @@ public class PubSubPlusExtension implements ParameterResolver {
 				return session;
 			}
 
-			return extensionContext.getStore(NAMESPACE).getOrComputeIfAbsent(PubSubPlusQueueResource.class, key -> {
+			return extensionContext.getStore(parameterNamespace).getOrComputeIfAbsent(PubSubPlusQueueResource.class,
+					key -> {
 				Queue queue = JCSMPFactory.onlyInstance().createQueue(RandomStringUtils.randomAlphanumeric(20));
 				try {
 					LOG.info("Provisioning queue {}", queue.getName());
@@ -269,7 +282,7 @@ public class PubSubPlusExtension implements ParameterResolver {
 				return new PubSubPlusQueueResource(queue, session);
 			}, PubSubPlusQueueResource.class).getQueue();
 		} else if (SempV2Api.class.isAssignableFrom(paramType)) {
-			return extensionContext.getStore(NAMESPACE).getOrComputeIfAbsent(SempV2Api.class, key ->
+			return extensionContext.getStore(parameterNamespace).getOrComputeIfAbsent(SempV2Api.class, key ->
 					Optional.ofNullable(container)
 							.map(c -> CONTAINER_PROVIDER.createSempV2Api(extensionContext, c))
 							.orElseGet(() -> Optional.ofNullable(getValidResolver(extensionContext))
@@ -285,8 +298,9 @@ public class PubSubPlusExtension implements ParameterResolver {
 		Set<String> overriddenJcsmpKeys = new HashSet<>();
 
 		Map<String, Object> jcsmpPropertyOverrides = JCSMPProperties.fromProperties(Arrays.stream(annotations)
-				.filter(a -> a instanceof JCSMPProps)
-				.flatMap(a -> Arrays.stream(((JCSMPProps) a).value()))
+				.filter(a -> a instanceof JCSMPProps || a instanceof JCSMPProperty)
+				.flatMap(a -> a instanceof JCSMPProps ? Arrays.stream(((JCSMPProps) a).value()) :
+						Stream.of((JCSMPProperty) a))
 				.peek(a -> {
 					if (a.key().startsWith("client_channel_properties.")) {
 						overriddenJcsmpKeys.add(JCSMPProperties.CLIENT_CHANNEL_PROPERTIES);
@@ -338,9 +352,10 @@ public class PubSubPlusExtension implements ParameterResolver {
 	}
 
 	private static ToxiproxyContainer createToxiproxyContainer(ExtensionContext extensionContext,
-														PubSubPlusContainer pubSubPlusContainer) {
-		return extensionContext.getStore(TOXIPROXY_NAMESPACE).getOrComputeIfAbsent(ToxiproxyContainerResource.class, key -> {
-			LOG.info("Creating toxiproxy container");
+															   Namespace toxiproxyNamespace,
+															   PubSubPlusContainer pubSubPlusContainer) {
+		return extensionContext.getStore(toxiproxyNamespace).getOrComputeIfAbsent(ToxiproxyContainerResource.class, key -> {
+			LOG.info("Creating Toxiproxy container");
 			ToxiproxyContainer container = new ToxiproxyContainer(DockerImageName.parse("shopify/toxiproxy:2.1.0"));
 			if (pubSubPlusContainer != null) {
 				if (pubSubPlusContainer.getNetwork() != null) {
@@ -358,12 +373,14 @@ public class PubSubPlusExtension implements ParameterResolver {
 	}
 
 	private static ToxiproxyContext createJcsmpProxy(ExtensionContext extensionContext,
-											ToxiproxyContainer toxiproxyContainer,
-											JCSMPProperties jcsmpProperties,
-											PubSubPlusContainer pubSubPlusContainer) {
+													 Namespace toxiproxyNamespace,
+													 ToxiproxyContainer toxiproxyContainer,
+													 JCSMPProperties jcsmpProperties,
+													 PubSubPlusContainer pubSubPlusContainer) {
 		URI clientHost = URI.create(jcsmpProperties.getStringProperty(JCSMPProperties.HOST));
-		return extensionContext.getStore(TOXIPROXY_NAMESPACE)
+		return extensionContext.getStore(toxiproxyNamespace)
 				.getOrComputeIfAbsent(ToxiproxyContext.class, key -> {
+					LOG.info("Provisioning Toxiproxy context for container {}", toxiproxyContainer.getContainerName());
 					ContainerProxy proxy = pubSubPlusContainer != null ?
 							toxiproxyContainer.getProxy(pubSubPlusContainer, PubSubPlusContainer.Port.SMF.getInternalPort()) :
 							toxiproxyContainer.getProxy(clientHost.getHost(), clientHost.getPort());
@@ -534,6 +551,35 @@ public class PubSubPlusExtension implements ParameterResolver {
 		 * @return new SempV2Api
 		 */
 		SempV2Api createSempV2Api(ExtensionContext extensionContext, PubSubPlusContainer container);
+	}
+
+	/**
+	 * <p>The store which the parameter's resources belongs to. Use this if you're using multiple parameters of the
+	 * same type. e.g. 2 {@code JCSMPSession}s.</p>
+	 * <p>If one resource is needed to create another (e.g. {@code JCSMPSession} is needed to create a {@code Queue}),
+	 * then this extension will retrieve that resource's required resource from the same store.</p>
+	 * <p>e.g. in the following code snippet, {@code defaultQueue} will be created using {@code defaultSession},
+	 * while {@code otherQueue} will be created using {@code otherSession}:</p>
+	 * <pre><code>
+	 * {@literal @}ExtendWith(PubSubPlusExtension.class)
+	 * public class Test {
+	 * 	{@literal @}Test
+	 * 	public void testMethod(JCSMPSession defaultSession, @Store("other") otherSession,
+	 * 		Queue defaultQueue, @Store("other") Queue otherQueue) {
+	 * 	}
+	 * }
+	 * </code></pre>
+	 */
+	@Retention(RetentionPolicy.RUNTIME)
+	@Target(ElementType.PARAMETER)
+	public @interface Store {
+		String DEFAULT = "default";
+
+		/**
+		 * The store name. Default value is {@value #DEFAULT}.
+		 * @return the store name.
+		 */
+		String value() default DEFAULT;
 	}
 
 	/**

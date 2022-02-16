@@ -73,6 +73,23 @@ public class Test {
 
 `JCSMPProperties` & `JCSMPSession` parameters can be annotated with `@JCSMPProperty` to override individual JCSMP properties.
 
+### Multiple Parameters of the Same Type
+
+If a test needs multiple parameters of the same type (e.g. 2 `JCSMPSession`s), use the `@Store` annotation. This parameter annotation defines which store the parameter's resources belongs to.
+
+If one resource is needed to create another (e.g. `JCSMPSession` is needed to create a `Queue`), then this extension will retrieve that resource's required resource from the same store.
+
+e.g. In the following code snippet, `defaultQueue` will be created using `defaultSession`, while `otherQueue` will be created using `otherSession`:
+```java
+@ExtendWith(PubSubPlusExtension.class)
+public class Test {
+    @Test
+    public void testMethod(JCSMPSession defaultSession, @Store("other") otherSession,
+                           Queue defaultQueue, @Store("other") Queue otherQueue) {
+    }
+}
+```
+
 ### To use an External PubSub+ Broker
 
 First, implement the `PubSubPlusExtension.ExternalProvider` interface. e.g.:

@@ -2,6 +2,7 @@ package com.solace.test.integration.junit.jupiter.extension;
 
 import com.solace.test.integration.junit.jupiter.extension.PubSubPlusExtension.JCSMPProperty;
 import com.solace.test.integration.junit.jupiter.extension.PubSubPlusExtension.JCSMPProxy;
+import com.solace.test.integration.junit.jupiter.extension.PubSubPlusExtension.Store;
 import com.solace.test.integration.junit.jupiter.extension.PubSubPlusExtension.ToxiproxyContext;
 import com.solace.test.integration.semp.v2.SempV2Api;
 import com.solacesystems.jcsmp.JCSMPChannelProperties;
@@ -23,6 +24,7 @@ import java.net.URI;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @ExtendWith(PubSubPlusExtension.class)
 @ExtendWith(PubSubPlusExtensionIT.TestExtension.class)
@@ -35,6 +37,35 @@ public class PubSubPlusExtensionIT {
 										 JCSMPSession jcsmpSession) {
 		assertFalse(jcsmpSession.isClosed(), "Session is not connected");
 		assertEquals(jcsmpProperties.getStringProperty(jcsmpProperty), jcsmpSession.getProperty(jcsmpProperty));
+	}
+
+	@Test
+	public void testDuplicateParameterTypes(
+			@JCSMPProperty(key = JCSMPProperties.PASSWORD, value = "testabc") JCSMPSession defaultJcsmpSession,
+			Queue defaultQueue,
+			SempV2Api defaultSempV2Api,
+			@JCSMPProxy JCSMPSession defaultProxyJcsmpSession,
+			@JCSMPProxy ToxiproxyContext defaultToxiproxyContext,
+			@Store("other") JCSMPSession otherJcsmpSession,
+			@Store("other") Queue otherQueue,
+			@Store("other") SempV2Api otherSempV2Api,
+			@Store("other") @JCSMPProxy JCSMPSession otherProxyJcsmpSession,
+			@Store("other") @JCSMPProxy ToxiproxyContext otherToxiproxyContext) {
+		assertNotEquals(defaultJcsmpSession, otherJcsmpSession);
+		assertNotEquals(defaultQueue, otherQueue);
+		assertNotEquals(defaultSempV2Api, otherSempV2Api);
+		assertNotEquals(defaultProxyJcsmpSession, otherProxyJcsmpSession);
+		assertNotEquals(defaultToxiproxyContext, otherToxiproxyContext);
+
+		assertNotEquals(defaultJcsmpSession.getProperty(JCSMPProperties.PASSWORD),
+				otherJcsmpSession.getProperty(JCSMPProperties.PASSWORD));
+
+		assertTrue(((String) defaultProxyJcsmpSession.getProperty(JCSMPProperties.HOST))
+				.contains(String.valueOf(defaultToxiproxyContext.getProxy().getProxyPort())));
+		assertTrue(((String) otherProxyJcsmpSession.getProperty(JCSMPProperties.HOST))
+				.contains(String.valueOf(otherToxiproxyContext.getProxy().getProxyPort())));
+		assertNotEquals(defaultToxiproxyContext.getProxy().getProxyPort(),
+				otherToxiproxyContext.getProxy().getProxyPort());
 	}
 
 	@Test
@@ -61,6 +92,12 @@ public class PubSubPlusExtensionIT {
 		assertEquals(sempV2Api, pubSubPlusContext.getSempV2Api());
 		assertEquals(queue, pubSubPlusContext.getQueue());
 		assertEquals(toxiproxyContext, pubSubPlusContext.getToxiproxyContext());
+	}
+
+	@Test
+	public void testOverrideOneJCSMPProperty(@JCSMPProperty(key = JCSMPProperties.PASSWORD, value = "testabc")
+														 JCSMPProperties jcsmpProperties) {
+		assertEquals("testabc", jcsmpProperties.getStringProperty(JCSMPProperties.PASSWORD));
 	}
 
 	@Test
