@@ -5,6 +5,7 @@ import com.solace.test.integration.junit.jupiter.extension.pubsubplus.provider.c
 import com.solace.test.integration.semp.v2.SempV2Api;
 import com.solace.test.integration.testcontainer.PubSubPlusContainer;
 import com.solacesystems.jcsmp.EndpointProperties;
+import com.solacesystems.jcsmp.JCSMPChannelProperties;
 import com.solacesystems.jcsmp.JCSMPException;
 import com.solacesystems.jcsmp.JCSMPFactory;
 import com.solacesystems.jcsmp.JCSMPProperties;
@@ -19,12 +20,14 @@ import org.junit.jupiter.api.extension.ParameterResolver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.containers.Network;
 import org.testcontainers.containers.ToxiproxyContainer;
 import org.testcontainers.containers.ToxiproxyContainer.ContainerProxy;
 import org.testcontainers.utility.DockerImageName;
 
 import java.lang.annotation.Annotation;
 import java.lang.annotation.ElementType;
+import java.lang.annotation.Repeatable;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
@@ -32,10 +35,14 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Properties;
 import java.util.ServiceLoader;
+import java.util.Set;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -71,6 +78,8 @@ import java.util.stream.Stream;
  * 	}
  * }
  * </code></pre>
+ * <p>{@code JCSMPProperties} & {@code JCSMPSession} parameters can be annotated with
+ * {@link JCSMPProperty @JCSMPProperty} to override individual JCSMP properties.</p>
  *
  * <h1>To use an External PubSub+ Broker:</h1>
  * <p>First, implement the {@link ExternalProvider} interface.</p>
@@ -181,6 +190,9 @@ public class PubSubPlusExtension implements ParameterResolver {
 					key -> {
 						LOG.info("Creating PubSub+ container");
 						PubSubPlusContainer newContainer = CONTAINER_PROVIDER.containerSupplier(extensionContext).get();
+						if (newContainer.getNetwork() == null) {
+							newContainer.withNetwork(Network.newNetwork());
+						}
 						if (!newContainer.isCreated()) {
 							newContainer.start();
 						}
@@ -206,6 +218,7 @@ public class PubSubPlusExtension implements ParameterResolver {
 			}
 
 			if (JCSMPProperties.class.isAssignableFrom(paramType)) {
+				applyJCSMPPropertiesOverride(jcsmpProperties, annotations);
 				if (Arrays.stream(annotations).anyMatch(a -> a instanceof JCSMPProxy)) {
 					ToxiproxyContainer toxiproxyContainer = createToxiproxyContainer(extensionContext, container);
 					ToxiproxyContext jcsmpProxy = createJcsmpProxy(extensionContext, toxiproxyContainer,
@@ -232,6 +245,7 @@ public class PubSubPlusExtension implements ParameterResolver {
 				}
 				try {
 					LOG.info("Creating JCSMP session");
+					applyJCSMPPropertiesOverride(props, annotations);
 					JCSMPSession jcsmpSession = JCSMPFactory.onlyInstance().createSession(props);
 					jcsmpSession.connect();
 					return new PubSubPlusSessionResource(jcsmpSession);
@@ -267,6 +281,47 @@ public class PubSubPlusExtension implements ParameterResolver {
 		}
 	}
 
+	private static void applyJCSMPPropertiesOverride(JCSMPProperties jcsmpProperties, Annotation... annotations) {
+		Set<String> overriddenJcsmpKeys = new HashSet<>();
+
+		Map<String, Object> jcsmpPropertyOverrides = JCSMPProperties.fromProperties(Arrays.stream(annotations)
+				.filter(a -> a instanceof JCSMPProps)
+				.flatMap(a -> Arrays.stream(((JCSMPProps) a).value()))
+				.peek(a -> {
+					if (a.key().startsWith("client_channel_properties.")) {
+						overriddenJcsmpKeys.add(JCSMPProperties.CLIENT_CHANNEL_PROPERTIES);
+						overriddenJcsmpKeys.add(String.join(".", JCSMPProperties.CLIENT_CHANNEL_PROPERTIES,
+										a.key().split("\\.", 2)[1]));
+					} else {
+						overriddenJcsmpKeys.add(a.key());
+					}
+				})
+				.collect(Properties::new, (p, a) -> p.setProperty("jcsmp." + a.key(), a.value()), Properties::putAll))
+				.getProperties();
+
+		for (Map.Entry<String, Object> overriddenJcsmpProperty : jcsmpPropertyOverrides.entrySet()) {
+			if (!overriddenJcsmpKeys.contains(overriddenJcsmpProperty.getKey())) continue;
+
+			if (overriddenJcsmpProperty.getValue() instanceof JCSMPChannelProperties) {
+				JCSMPChannelProperties channelProperties = (JCSMPChannelProperties) jcsmpProperties.getProperty(
+						overriddenJcsmpProperty.getKey());
+				overriddenJcsmpKeys.stream()
+						.filter(k -> k.startsWith(overriddenJcsmpProperty.getKey() + "."))
+						.map(k -> k.split("\\.", 2)[1])
+						.forEach(k -> {
+							Object newValue = ((JCSMPChannelProperties) overriddenJcsmpProperty.getValue())
+									.getProperty(k);
+							LOG.trace("Overriding property {}.{} with {}", overriddenJcsmpProperty.getKey(), k,
+									newValue);
+							channelProperties.setProperty(k, newValue);
+						});
+			} else {
+				LOG.trace("Overriding property {} with {}", overriddenJcsmpProperty.getKey(), overriddenJcsmpProperty.getValue());
+				jcsmpProperties.setProperty(overriddenJcsmpProperty.getKey(), overriddenJcsmpProperty.getValue());
+			}
+		}
+	}
+
 	private static JCSMPProperties createDefaultJcsmpProperties() {
 		return new JCSMPProperties();
 	}
@@ -285,10 +340,15 @@ public class PubSubPlusExtension implements ParameterResolver {
 	private static ToxiproxyContainer createToxiproxyContainer(ExtensionContext extensionContext,
 														PubSubPlusContainer pubSubPlusContainer) {
 		return extensionContext.getStore(TOXIPROXY_NAMESPACE).getOrComputeIfAbsent(ToxiproxyContainerResource.class, key -> {
-			LOG.info("Creating PubSub+ container");
+			LOG.info("Creating toxiproxy container");
 			ToxiproxyContainer container = new ToxiproxyContainer(DockerImageName.parse("shopify/toxiproxy:2.1.0"));
 			if (pubSubPlusContainer != null) {
-				container.withNetwork(pubSubPlusContainer.getNetwork()).withNetworkAliases(TOXIPROXY_NETWORK_ALIAS);
+				if (pubSubPlusContainer.getNetwork() != null) {
+					container.withNetwork(pubSubPlusContainer.getNetwork()).withNetworkAliases(TOXIPROXY_NETWORK_ALIAS);
+				} else {
+					throw new IllegalStateException(String.format("%s container %s has no network",
+							pubSubPlusContainer.getDockerImageName(), pubSubPlusContainer.getContainerName()));
+				}
 			}
 			if (!container.isCreated()) {
 				container.start();
@@ -482,6 +542,40 @@ public class PubSubPlusExtension implements ParameterResolver {
 	@Retention(RetentionPolicy.RUNTIME)
 	@Target(ElementType.PARAMETER)
 	public @interface JCSMPProxy {}
+
+	/**
+	 * Collection of JCSMP properties.
+	 */
+	@Retention(RetentionPolicy.RUNTIME)
+	@Target(ElementType.PARAMETER)
+	public @interface JCSMPProps {
+		JCSMPProperty[] value() default {};
+	}
+
+	/**
+	 * A single JCSMP property. Keys and values must satisfy {@link JCSMPProperties#fromProperties(Properties)}
+	 * requirements.
+	 */
+	@Retention(RetentionPolicy.RUNTIME)
+	@Target(ElementType.PARAMETER)
+	@Repeatable(JCSMPProps.class)
+	public @interface JCSMPProperty {
+		/**
+		 * JCSMP property key whose format adheres to the requirements of
+		 * {@link JCSMPProperties#fromProperties(Properties)}.
+		 * Does not need to be prepended with the 'jcsmp.' prefix.
+		 * @return JCSMP property key.
+		 * @see JCSMPProperties
+		 */
+		String key();
+
+		/**
+		 * Textual representation of the JCSMP property's value which meets the requirements of
+		 * {@link JCSMPProperties#fromProperties(Properties)}.
+		 * @return JCSMP property textual value.
+		 */
+		String value();
+	}
 
 	private static class PubSubPlusContainerResource extends ContainerResource<PubSubPlusContainer> {
 		private PubSubPlusContainerResource(PubSubPlusContainer container) {

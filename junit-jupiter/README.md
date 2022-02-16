@@ -71,6 +71,8 @@ public class Test {
 }
 ```
 
+`JCSMPProperties` & `JCSMPSession` parameters can be annotated with `@JCSMPProperty` to override individual JCSMP properties.
+
 ### To use an External PubSub+ Broker
 
 First, implement the `PubSubPlusExtension.ExternalProvider` interface. e.g.:

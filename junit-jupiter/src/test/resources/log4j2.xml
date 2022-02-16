@@ -6,6 +6,9 @@
 		</Console>
 	</Appenders>
 	<Loggers>
+		<Logger name="com.solace.test.integration.junit.jupiter.extension" level="trace" additivity="false">
+			<AppenderRef ref="Console"/>
+		</Logger>
 		<Root level="INFO">
 			<AppenderRef ref="Console" />
 		</Root>
