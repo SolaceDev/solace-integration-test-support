@@ -9,8 +9,10 @@ Utility for using Solace PubSub+ in JUnit Jupiter.
 * [Using the PubSub+ Extension](#using-the-pubsub-extension)
   * [PubSub+ Resource Lifecycle](#pubsub-resource-lifecycle)
   * [Basic Usage](#basic-usage)
+  * [Multiple Parameters of the Same Type](#multiple-parameters-of-the-same-type)
   * [To use an External PubSub+ Broker](#to-use-an-external-pubsub-broker)
   * [Customize PubSub+ Docker Container](#customize-pubsub-docker-container)
+  * [Integrating with Other Extensions](#integrating-with-other-extensions)
   * [Toxiproxy Integration](#toxiproxy-integration)
 * [Other Extensions](#other-extensions)
 
@@ -167,6 +169,25 @@ com.test.OtherContainerProvider
 Note: Only one container provider is supported. If multiple are detected, the first found provider will be used.
 
 By default, `SimpleContainerProvider` is enabled as the container provider.
+
+### Integrating with Other Extensions
+
+To integrate this extension into other extensions, use this extension's `static` getters. e.g.:
+
+```java
+public class SomeNewExtension implements ParameterResolver {
+	public boolean supportsParameter(ParameterContext parameterContext, ExtensionContext extensionContext) throws ParameterResolutionException {
+		...
+	}
+	
+	public Object resolveParameter(ParameterContext parameterContext, ExtensionContext extensionContext) throws ParameterResolutionException {
+		JCSMPSession jcsmpSession = PubSubPlusExtension.getJCSMPSession(extensionContext);
+	}
+}
+
+```
+
+Note: Resources created through these methods follows the [PubSub+ Resource Lifecycle](#pubsub-resource-lifecycle).
 
 ### Toxiproxy Integration
 
