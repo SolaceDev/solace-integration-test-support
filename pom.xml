@@ -15,6 +15,7 @@
 		<revision>0.9.1</revision>
 		<sha1/> <!-- Doesn't actually need to be a sha1, this is just another version modifier variable -->
 		<changelist>-SNAPSHOT</changelist>
+		<next-revision>${parsedVersion.majorVersion}.${parsedVersion.minorVersion}.${parsedVersion.nextIncrementalVersion}</next-revision>
 
 		<repoName>SolaceDev</repoName>
 		<jcsmp.version>10.13.0</jcsmp.version>
