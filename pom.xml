@@ -189,6 +189,7 @@
 				<version>1.13.0</version>
 				<configuration>
 					<tag>${project.version}</tag>
+					<connectionType>developerConnection</connectionType>
 				</configuration>
 			</plugin>
 
@@ -196,6 +197,9 @@
 				<groupId>org.codehaus.mojo</groupId>
 				<artifactId>versions-maven-plugin</artifactId>
 				<version>2.11.0</version>
+				<configuration>
+					<generateBackupPoms>false</generateBackupPoms>
+				</configuration>
 			</plugin>
 		</plugins>
 	</build>
