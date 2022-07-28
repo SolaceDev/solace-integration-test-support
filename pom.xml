@@ -3,7 +3,7 @@
 
 	<groupId>com.solace.test.integration</groupId>
 	<artifactId>solace-integration-test-support</artifactId>
-	<version>0.9.1-SNAPSHOT</version>
+	<version>${revision}${sha1}${changelist}</version>
 	<packaging>pom</packaging>
 
 	<name>Solace Integration Test Support</name>
@@ -11,6 +11,11 @@
 	<url>https://github.com/${repoName}/solace-integration-test-support/tree/${project.scm.tag}</url>
 
 	<properties>
+		<!-- Project Versioning Properties -->
+		<revision>0.9.1</revision>
+		<sha1/> <!-- Doesn't actually need to be a sha1, this is just another version modifier variable -->
+		<changelist>-SNAPSHOT</changelist>
+
 		<repoName>SolaceDev</repoName>
 		<jcsmp.version>10.13.0</jcsmp.version>
 		<slf4j.version>1.7.32</slf4j.version>
@@ -113,13 +118,17 @@
 	<build>
 		<plugins>
 			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-release-plugin</artifactId>
-				<version>2.5.3</version>
-				<configuration>
-					<goals>install</goals> <!-- Do not deploy it -->
-					<autoVersionSubmodules>true</autoVersionSubmodules>
-				</configuration>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>build-helper-maven-plugin</artifactId>
+				<version>3.3.0</version>
+				<executions>
+					<execution>
+						<id>parse-version</id>
+						<goals>
+							<goal>parse-version</goal>
+						</goals>
+					</execution>
+				</executions>
 			</plugin>
 
 			<plugin>
@@ -173,6 +182,71 @@
 					</execution>
 				</executions>
 			</plugin>
+
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-scm-plugin</artifactId>
+				<version>1.13.0</version>
+				<configuration>
+					<tag>${project.version}</tag>
+				</configuration>
+			</plugin>
+
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>versions-maven-plugin</artifactId>
+				<version>2.11.0</version>
+				<executions>
+					<execution>
+						<goals>
+							<goal>set-property</goal>
+						</goals>
+						<configuration>
+							<property>revision</property>
+							<newVersion>${parsedVersion.majorVersion}.${parsedVersion.minorVersion}.${parsedVersion.nextIncrementalVersion}</newVersion>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
 		</plugins>
 	</build>
+
+	<profiles>
+		<profile>
+			<id>releaseInternal</id>
+			<activation>
+				<property>
+					<name>!releaseTarget</name>
+				</property>
+			</activation>
+			<distributionManagement>
+				<repository>
+					<id>releases</id>
+					<name>Apps Releases Repository</name>
+					<url>http://apps-jenkins:9090/nexus/content/repositories/releases</url>
+				</repository>
+				<snapshotRepository>
+					<id>snapshots</id>
+					<name>Apps Snapshots Repository</name>
+					<url>http://apps-jenkins:9090/nexus/content/repositories/snapshots</url>
+				</snapshotRepository>
+			</distributionManagement>
+		</profile>
+		<profile>
+			<id>releaseGitHub</id>
+			<activation>
+				<property>
+					<name>releaseTarget</name>
+					<value>github</value>
+				</property>
+			</activation>
+			<distributionManagement>
+				<repository>
+					<id>github</id>
+					<name>GitHub SolaceDev Maven Packages - Solace Integration Test Support</name>
+					<url>https://maven.pkg.github.com/SolaceDev/solace-integration-test-support</url>
+				</repository>
+			</distributionManagement>
+		</profile>
+	</profiles>
 </project>
