@@ -18,10 +18,8 @@ jobs:
           java-version: 8
       - name: Publish package
         run: >-
-          mvn --batch-mode deploy scm:tag versions:set-property versions:commit
+          mvn --batch-mode deploy
           -DreleaseTarget=github
           -Dchangelist=
-          -Dproperty=revision
-          -DnewVersion=\${parsedVersion.majorVersion}.\${parsedVersion.minorVersion}.\${parsedVersion.nextIncrementalVersion}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
