@@ -19,7 +19,7 @@
 
 		<repoName>SolaceDev</repoName>
 		<jcsmp.version>10.16.0</jcsmp.version>
-		<slf4j.version>1.7.32</slf4j.version>
+		<slf4j.version>2.0.3</slf4j.version>
 	</properties>
 
 	<licenses>
