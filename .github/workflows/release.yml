@@ -2,14 +2,26 @@ name: Release
 
 on:
   workflow_dispatch:
+    inputs:
+      pushScmChanges:
+        description: 'Whether or not to push changes to Git'
+        type: boolean
+        default: true
+        required: true
+      skipDeploy:
+        description: 'Whether or not to skip deploy'
+        type: boolean
+        default: false
+        required: true
+
+permissions:
+  contents: write
+  packages: write
 
 jobs:
   publish:
     if: github.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-java@v3
@@ -17,6 +29,21 @@ jobs:
           distribution: zulu
           java-version: 17
       - name: Publish package
-        run: mvn --batch-mode deploy -DreleaseTarget=github -Dchangelist=
+        run: >-
+          mvn -B clean scm:tag deploy -DreleaseTarget=github -Dchangelist=
+          -Dmaven.deploy.skip=$SKIP_DEPLOY
+          -DpushChanges=$PUSH_CHANGES
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SKIP_DEPLOY: ${{ inputs.skipDeploy }}
+          PUSH_CHANGES: ${{ inputs.pushScmChanges }}
+      - name: Increment version
+        run: >-
+          mvn -B validate versions:set-property scm:checkin -Dchangelist=
+          -Dproperty=revision
+          -DnewVersion='${next-revision}'
+          -Dmessage='Increment revision to ${next-revision}'
+          -DpushChanges=$PUSH_CHANGES
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PUSH_CHANGES: ${{ inputs.pushScmChanges }}
