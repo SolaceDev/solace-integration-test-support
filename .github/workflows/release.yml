@@ -4,12 +4,12 @@ on:
   workflow_dispatch:
     inputs:
       pushScmChanges:
-        description: 'Whether or not to push changes to Git'
+        description: 'Push changes to Git (e.g. tag and version increment)'
         type: boolean
         default: true
         required: true
       skipDeploy:
-        description: 'Whether or not to skip deploy'
+        description: 'Skip Maven deploy'
         type: boolean
         default: false
         required: true
