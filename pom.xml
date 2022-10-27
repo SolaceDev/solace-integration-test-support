@@ -18,7 +18,7 @@
 		<next-revision>${parsedVersion.majorVersion}.${parsedVersion.minorVersion}.${parsedVersion.nextIncrementalVersion}</next-revision>
 
 		<repoName>SolaceDev</repoName>
-		<jcsmp.version>10.13.0</jcsmp.version>
+		<jcsmp.version>10.16.0</jcsmp.version>
 		<slf4j.version>1.7.32</slf4j.version>
 	</properties>
 
