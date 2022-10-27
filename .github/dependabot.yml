@@ -10,5 +10,3 @@ updates:
       - dependency-name: "org.springframework.*"
       - dependency-name: "org.testcontainers:*"
       - dependency-name: "org.junit:*"
-      - dependency-name: "org.apache.logging.log4j:*"
-      - dependency-name: "org.slf4j:*"
