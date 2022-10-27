@@ -15,7 +15,7 @@
 
 	<properties>
 		<swagger-annotations-version>1.5.21</swagger-annotations-version>
-		<jodatime-version>2.7</jodatime-version>
+		<jodatime-version>2.10.8</jodatime-version>
 	</properties>
 
 	<dependencyManagement>
