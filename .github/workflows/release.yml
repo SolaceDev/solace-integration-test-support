@@ -28,9 +28,15 @@ jobs:
         with:
           distribution: zulu
           java-version: 17
+      - name: Configure Git commit info
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
       - name: Publish package
         run: >-
-          mvn -B clean scm:tag deploy -DreleaseTarget=github -Dchangelist=
+          mvn -B clean scm:tag deploy
+          -Dchangelist=
+          -DreleaseTarget=github
           -Dmaven.deploy.skip=$SKIP_DEPLOY
           -DpushChanges=$PUSH_CHANGES
         env:
@@ -39,7 +45,8 @@ jobs:
           PUSH_CHANGES: ${{ inputs.pushScmChanges }}
       - name: Increment version
         run: >-
-          mvn -B validate versions:set-property scm:checkin -Dchangelist=
+          mvn -B validate versions:set-property scm:checkin
+          -Dchangelist=
           -Dproperty=revision
           -DnewVersion='${next-revision}'
           -Dmessage='Increment revision to ${next-revision}'
