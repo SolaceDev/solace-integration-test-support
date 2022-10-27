@@ -15,11 +15,8 @@ jobs:
       - uses: actions/setup-java@v3
         with:
           distribution: zulu
-          java-version: 8
+          java-version: 17
       - name: Publish package
-        run: >-
-          mvn --batch-mode deploy
-          -DreleaseTarget=github
-          -Dchangelist=
+        run: mvn --batch-mode deploy -DreleaseTarget=github -Dchangelist=
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
