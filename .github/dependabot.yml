@@ -4,7 +4,9 @@ updates:
     directory: "/"
     schedule:
       interval: "daily"
+    open-pull-requests-limit: 50
     allow:
       - dependency-name: "com.solacesystems:*"
       - dependency-name: "org.springframework.*"
-      - dependency-name: "org.apache.logging.log4j:*"
+      - dependency-name: "org.testcontainers:*"
+      - dependency-name: "org.junit:*"

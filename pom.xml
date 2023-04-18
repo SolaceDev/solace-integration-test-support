@@ -12,13 +12,13 @@
 
 	<properties>
 		<!-- Project Versioning Properties -->
-		<revision>0.9.1</revision>
+		<revision>1.0.2</revision>
 		<sha1/> <!-- Doesn't actually need to be a sha1, this is just another version modifier variable -->
 		<changelist>-SNAPSHOT</changelist>
+		<next-revision>${parsedVersion.majorVersion}.${parsedVersion.minorVersion}.${parsedVersion.nextIncrementalVersion}</next-revision>
 
 		<repoName>SolaceDev</repoName>
-		<jcsmp.version>10.13.0</jcsmp.version>
-		<slf4j.version>1.7.32</slf4j.version>
+		<jcsmp.version>10.16.0</jcsmp.version>
 	</properties>
 
 	<licenses>
@@ -59,42 +59,6 @@
 
 	<dependencyManagement>
 		<dependencies>
-			<!--
-			Workaround for CVE-2021-45046
-			Move log4j-bom below spring-boot-dependencies after upgrading to Spring Boot >= 2.6.2
-			 -->
-			<dependency>
-				<groupId>org.apache.logging.log4j</groupId>
-				<artifactId>log4j-bom</artifactId>
-				<version>2.17.1</version>
-				<type>pom</type>
-				<scope>import</scope>
-			</dependency>
-
-			<dependency>
-				<groupId>org.springframework.boot</groupId>
-				<artifactId>spring-boot-dependencies</artifactId>
-				<version>2.6.3</version>
-				<type>pom</type>
-				<scope>import</scope>
-			</dependency>
-
-			<dependency>
-				<groupId>org.junit</groupId>
-				<artifactId>junit-bom</artifactId>
-				<version>5.7.2</version>
-				<type>pom</type>
-				<scope>import</scope>
-			</dependency>
-
-			<dependency>
-				<groupId>org.testcontainers</groupId>
-				<artifactId>testcontainers-bom</artifactId>
-				<version>1.16.0</version>
-				<type>pom</type>
-				<scope>import</scope>
-			</dependency>
-
 			<dependency>
 				<groupId>com.solacesystems</groupId>
 				<artifactId>sol-jcsmp</artifactId>
@@ -102,15 +66,19 @@
 			</dependency>
 
 			<dependency>
-				<groupId>org.slf4j</groupId>
-				<artifactId>slf4j-api</artifactId>
-				<version>${slf4j.version}</version>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-dependencies</artifactId>
+				<version>2.7.5</version>
+				<type>pom</type>
+				<scope>import</scope>
 			</dependency>
 
 			<dependency>
-				<groupId>org.slf4j</groupId>
-				<artifactId>slf4j-simple</artifactId>
-				<version>${slf4j.version}</version>
+				<groupId>org.testcontainers</groupId>
+				<artifactId>testcontainers-bom</artifactId>
+				<version>1.17.5</version>
+				<type>pom</type>
+				<scope>import</scope>
 			</dependency>
 		</dependencies>
 	</dependencyManagement>
@@ -185,10 +153,41 @@
 
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-enforcer-plugin</artifactId>
+				<version>3.1.0</version>
+				<executions>
+					<execution>
+						<id>enforce</id>
+						<goals>
+							<goal>enforce</goal>
+						</goals>
+						<configuration>
+							<rules>
+								<requireReleaseDeps>
+									<message>No Snapshots Allowed!</message>
+									<onlyWhenRelease>true</onlyWhenRelease>
+								</requireReleaseDeps>
+
+								<!--
+								To make sure hardcoded Spring bugfixes are re-evaluated whenever Spring is upgraded.
+
+								If this fails, re-evaluate any dependencies/BOMs commented with "[SPRING-BUGFIX]".
+								Usually the fix is to remove the bugfix dependencies/BOMs.
+								-->
+								<requireUpperBoundDeps/>
+							</rules>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-scm-plugin</artifactId>
 				<version>1.13.0</version>
 				<configuration>
 					<tag>${project.version}</tag>
+					<connectionType>developerConnection</connectionType>
 				</configuration>
 			</plugin>
 
@@ -196,6 +195,9 @@
 				<groupId>org.codehaus.mojo</groupId>
 				<artifactId>versions-maven-plugin</artifactId>
 				<version>2.11.0</version>
+				<configuration>
+					<generateBackupPoms>false</generateBackupPoms>
+				</configuration>
 			</plugin>
 		</plugins>
 	</build>
