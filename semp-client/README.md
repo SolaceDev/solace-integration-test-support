@@ -39,12 +39,12 @@ This project has a wrapper class from which you can call any SEMPv2 command:
 SempV2Api sempV2Api = new SempV2Api(mgmtHost, mgmtUsername, mgmtPassword);
 
 // Call Config API Commands
-sempV2Api.config().getAboutApi();
+sempV2Api.config().getAboutApi(null);
 
 // Call Monitor API Commands
-sempV2Api.config().getAboutApi();
+sempV2Api.config().getAboutApi(null);
 
 // Call Config API Commands
-sempV2Api.config().getAboutApi();
+sempV2Api.config().getAboutApi(null, null);
 ```
 

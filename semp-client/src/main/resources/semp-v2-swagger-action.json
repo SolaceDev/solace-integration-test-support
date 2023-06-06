@@ -19,10 +19,6 @@
           "type": "string"
         }
       },
-      "required": [
-        "platform",
-        "sempVersion"
-      ],
       "type": "object"
     },
     "AboutApiLinks": {
@@ -53,6 +49,10 @@
     },
     "AboutLinks": {
       "properties": {
+        "apiUri": {
+          "description": "The URI of this About's API Description object. Available since 2.11.",
+          "type": "string"
+        },
         "uri": {
           "description": "The URI of this About object.",
           "type": "string"
@@ -92,12 +92,48 @@
             "read-write"
           ],
           "type": "string"
+        },
+        "sessionActive": {
+          "description": "Indicates whether a session is active for this request. Available since 2.24.",
+          "type": "boolean"
+        },
+        "sessionCreateTime": {
+          "description": "The timestamp of when the session was created. This value represents the number of seconds since 1970-01-01 00:00:00 UTC (Unix time). Available since 2.21.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "sessionCurrentTime": {
+          "description": "The current server timestamp. This is provided as a reference point for the other timestamps provided. This value represents the number of seconds since 1970-01-01 00:00:00 UTC (Unix time). Available since 2.21.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "sessionHardExpiryTime": {
+          "description": "The hard expiry time for the session. After this time the session will be invalid, regardless of activity. This value represents the number of seconds since 1970-01-01 00:00:00 UTC (Unix time). Available since 2.21.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "sessionId": {
+          "description": "An identifier for the session to differentiate this session from other sessions for the same user. This value is not guaranteed to be unique between active sessions for different users. Available since 2.21.",
+          "type": "string"
+        },
+        "sessionIdleExpiryTime": {
+          "description": "The session idle expiry time. After this time the session will be invalid if there has been no activity. This value represents the number of seconds since 1970-01-01 00:00:00 UTC (Unix time). Available since 2.21.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "username": {
+          "description": "The username of the User. Available since 2.17.",
+          "type": "string"
         }
       },
       "type": "object"
     },
     "AboutUserLinks": {
       "properties": {
+        "logoutUri": {
+          "description": "The URI of this User's Logout action. Available since 2.21.",
+          "type": "string"
+        },
         "msgVpnsUri": {
           "description": "The URI of this User's collection of User Message VPN objects.",
           "type": "string"
@@ -107,6 +143,10 @@
           "type": "string"
         }
       },
+      "type": "object"
+    },
+    "AboutUserLogout": {
+      "properties": {},
       "type": "object"
     },
     "AboutUserMsgVpn": {
@@ -204,11 +244,51 @@
           "type": "string"
         },
         "certAuthoritiesUri": {
-          "description": "The URI of this Broker's collection of Certificate Authority objects.",
+          "description": "The URI of this Broker's collection of Certificate Authority objects. Deprecated since 2.19. Replaced by clientCertAuthorities and domainCertAuthorities.",
+          "type": "string"
+        },
+        "clientCertAuthoritiesUri": {
+          "description": "The URI of this Broker's collection of Client Certificate Authority objects. Available since 2.19.",
+          "type": "string"
+        },
+        "configSyncAssertLeaderMsgVpnUri": {
+          "description": "The URI of this Broker's Assert Leader Message VPN action. Available since 2.22.",
+          "type": "string"
+        },
+        "configSyncAssertLeaderRouterUri": {
+          "description": "The URI of this Broker's Assert Leader Router action. Available since 2.22.",
+          "type": "string"
+        },
+        "configSyncResyncFollowerMsgVpnUri": {
+          "description": "The URI of this Broker's Resync Follower Message VPN action. Available since 2.22.",
+          "type": "string"
+        },
+        "configSyncResyncLeaderMsgVpnUri": {
+          "description": "The URI of this Broker's Resync Leader Message VPN action. Available since 2.22.",
+          "type": "string"
+        },
+        "configSyncResyncLeaderRouterUri": {
+          "description": "The URI of this Broker's Resync Leader Router action. Available since 2.22.",
+          "type": "string"
+        },
+        "guaranteedMsgingDefragmentMsgSpoolFilesStartUri": {
+          "description": "The URI of this Broker's Start Defragmentation action. Available since 2.18.",
+          "type": "string"
+        },
+        "guaranteedMsgingDefragmentMsgSpoolFilesStopUri": {
+          "description": "The URI of this Broker's Stop Defragmentation action. Available since 2.18.",
           "type": "string"
         },
         "msgVpnsUri": {
           "description": "The URI of this Broker's collection of Message VPN objects. Available since 2.11.",
+          "type": "string"
+        },
+        "oauthProfilesUri": {
+          "description": "The URI of this Broker's collection of OAuth Profile objects. Available since 2.24.",
+          "type": "string"
+        },
+        "sessionsUri": {
+          "description": "The URI of this Broker's collection of SEMP Session objects. Available since 2.21.",
           "type": "string"
         },
         "uri": {
@@ -261,7 +341,7 @@
     "CertAuthority": {
       "properties": {
         "certAuthorityName": {
-          "description": "The name of the Certificate Authority.",
+          "description": "The name of the Certificate Authority. Deprecated since 2.19. Replaced by clientCertAuthorities and domainCertAuthorities.",
           "type": "string"
         }
       },
@@ -270,7 +350,7 @@
     "CertAuthorityLinks": {
       "properties": {
         "refreshCrlUri": {
-          "description": "The URI of this Certificate Authority's Refresh CRL action.",
+          "description": "The URI of this Certificate Authority's Refresh CRL action. Deprecated since 2.19. Replaced by clientCertAuthorities.",
           "type": "string"
         },
         "uri": {
@@ -301,6 +381,115 @@
       ],
       "type": "object"
     },
+    "ClientCertAuthoritiesResponse": {
+      "properties": {
+        "data": {
+          "items": {
+            "$ref": "#/definitions/ClientCertAuthority"
+          },
+          "type": "array"
+        },
+        "links": {
+          "items": {
+            "$ref": "#/definitions/ClientCertAuthorityLinks"
+          },
+          "type": "array"
+        },
+        "meta": {
+          "$ref": "#/definitions/SempMeta"
+        }
+      },
+      "required": [
+        "meta"
+      ],
+      "type": "object"
+    },
+    "ClientCertAuthority": {
+      "properties": {
+        "certAuthorityName": {
+          "description": "The name of the Certificate Authority.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "ClientCertAuthorityLinks": {
+      "properties": {
+        "refreshCrlUri": {
+          "description": "The URI of this Client Certificate Authority's Refresh CRL action.",
+          "type": "string"
+        },
+        "uri": {
+          "description": "The URI of this Client Certificate Authority object.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "ClientCertAuthorityRefreshCrl": {
+      "properties": {},
+      "type": "object"
+    },
+    "ClientCertAuthorityResponse": {
+      "properties": {
+        "data": {
+          "$ref": "#/definitions/ClientCertAuthority"
+        },
+        "links": {
+          "$ref": "#/definitions/ClientCertAuthorityLinks"
+        },
+        "meta": {
+          "$ref": "#/definitions/SempMeta"
+        }
+      },
+      "required": [
+        "meta"
+      ],
+      "type": "object"
+    },
+    "ConfigSyncAssertLeaderMsgVpn": {
+      "properties": {
+        "msgVpnName": {
+          "description": "The name of the Message VPN.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "ConfigSyncAssertLeaderRouter": {
+      "properties": {},
+      "type": "object"
+    },
+    "ConfigSyncResyncFollowerMsgVpn": {
+      "properties": {
+        "msgVpnName": {
+          "description": "The name of the Message VPN.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "ConfigSyncResyncLeaderMsgVpn": {
+      "properties": {
+        "msgVpnName": {
+          "description": "The name of the Message VPN.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "ConfigSyncResyncLeaderRouter": {
+      "properties": {},
+      "type": "object"
+    },
+    "GuaranteedMsgingDefragmentMsgSpoolFilesStart": {
+      "properties": {},
+      "type": "object"
+    },
+    "GuaranteedMsgingDefragmentMsgSpoolFilesStop": {
+      "properties": {},
+      "type": "object"
+    },
     "MsgVpn": {
       "properties": {
         "msgVpnName": {
@@ -310,14 +499,84 @@
       },
       "type": "object"
     },
-    "MsgVpnAuthenticationOauthProvider": {
+    "MsgVpnAuthenticationOauthProfile": {
       "properties": {
         "msgVpnName": {
           "description": "The name of the Message VPN.",
           "type": "string"
         },
+        "oauthProfileName": {
+          "description": "The name of the OAuth profile.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "MsgVpnAuthenticationOauthProfileClearStats": {
+      "properties": {},
+      "type": "object"
+    },
+    "MsgVpnAuthenticationOauthProfileLinks": {
+      "properties": {
+        "clearStatsUri": {
+          "description": "The URI of this OAuth Profile's Clear Stats action.",
+          "type": "string"
+        },
+        "uri": {
+          "description": "The URI of this OAuth Profile object.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "MsgVpnAuthenticationOauthProfileResponse": {
+      "properties": {
+        "data": {
+          "$ref": "#/definitions/MsgVpnAuthenticationOauthProfile"
+        },
+        "links": {
+          "$ref": "#/definitions/MsgVpnAuthenticationOauthProfileLinks"
+        },
+        "meta": {
+          "$ref": "#/definitions/SempMeta"
+        }
+      },
+      "required": [
+        "meta"
+      ],
+      "type": "object"
+    },
+    "MsgVpnAuthenticationOauthProfilesResponse": {
+      "properties": {
+        "data": {
+          "items": {
+            "$ref": "#/definitions/MsgVpnAuthenticationOauthProfile"
+          },
+          "type": "array"
+        },
+        "links": {
+          "items": {
+            "$ref": "#/definitions/MsgVpnAuthenticationOauthProfileLinks"
+          },
+          "type": "array"
+        },
+        "meta": {
+          "$ref": "#/definitions/SempMeta"
+        }
+      },
+      "required": [
+        "meta"
+      ],
+      "type": "object"
+    },
+    "MsgVpnAuthenticationOauthProvider": {
+      "properties": {
+        "msgVpnName": {
+          "description": "The name of the Message VPN. Deprecated since 2.25. Replaced by authenticationOauthProfiles.",
+          "type": "string"
+        },
         "oauthProviderName": {
-          "description": "The name of the OAuth Provider.",
+          "description": "The name of the OAuth Provider. Deprecated since 2.25. Replaced by authenticationOauthProfiles.",
           "type": "string"
         }
       },
@@ -330,7 +589,7 @@
     "MsgVpnAuthenticationOauthProviderLinks": {
       "properties": {
         "clearStatsUri": {
-          "description": "The URI of this OAuth Provider's Clear Stats action.",
+          "description": "The URI of this OAuth Provider's Clear Stats action. Deprecated since 2.25. authenticationOauthProviders replaced by authenticationOauthProfiles.",
           "type": "string"
         },
         "uri": {
@@ -405,7 +664,7 @@
     "MsgVpnBridgeClearEvent": {
       "properties": {
         "eventName": {
-          "description": "The name of the event. This attribute is absent from a GET and not updated when absent in a PUT. The allowed values and their meaning are:\n\n<pre>\n\"ttl-exceeded\" - Time to live exceeded event.\n</pre>\n",
+          "description": "The name of the event. The allowed values and their meaning are:\n\n<pre>\n\"ttl-exceeded\" - Time to live exceeded event.\n</pre>\n",
           "enum": [
             "ttl-exceeded"
           ],
@@ -515,9 +774,11 @@
     "MsgVpnClientClearEvent": {
       "properties": {
         "eventName": {
-          "description": "The name of the event. This attribute is absent from a GET and not updated when absent in a PUT. The allowed values and their meaning are:\n\n<pre>\n\"large-message\" - The Client large message received event.\n\"max-eliding-topic-count\" - The Client maximum eliding topics reached event.\n</pre>\n",
+          "description": "The name of the event. The allowed values and their meaning are:\n\n<pre>\n\"large-message\" - The Client large message received event.\n\"message-too-big\" - The Client message too big event.\n\"parse-error\" - The Client parse error event.\n\"max-eliding-topic-count\" - The Client maximum eliding topics reached event.\n</pre>\n",
           "enum": [
             "large-message",
+            "message-too-big",
+            "parse-error",
             "max-eliding-topic-count"
           ],
           "type": "string"
@@ -726,7 +987,7 @@
     "MsgVpnDistributedCacheClusterInstanceBackupCachedMsgs": {
       "properties": {
         "filename": {
-          "description": "The filename for storing the cached messages. This attribute is absent from a GET and not updated when absent in a PUT.",
+          "description": "The filename for storing the cached messages.",
           "type": "string"
         }
       },
@@ -743,7 +1004,7 @@
     "MsgVpnDistributedCacheClusterInstanceClearEvent": {
       "properties": {
         "eventName": {
-          "description": "The name of the event. This attribute is absent from a GET and not updated when absent in a PUT. The allowed values and their meaning are:\n\n<pre>\n\"lost-message\" - Lost message event.\n</pre>\n",
+          "description": "The name of the event. The allowed values and their meaning are:\n\n<pre>\n\"lost-message\" - Lost message event.\n</pre>\n",
           "enum": [
             "lost-message"
           ],
@@ -759,7 +1020,7 @@
     "MsgVpnDistributedCacheClusterInstanceDeleteMsgs": {
       "properties": {
         "topic": {
-          "description": "The topic covering the messages to delete. This attribute is absent from a GET and not updated when absent in a PUT.",
+          "description": "The topic covering the messages to delete.",
           "type": "string"
         }
       },
@@ -826,7 +1087,7 @@
     "MsgVpnDistributedCacheClusterInstanceRestoreCachedMsgs": {
       "properties": {
         "filename": {
-          "description": "The filename for restoring the cached messages. This attribute is absent from a GET and not updated when absent in a PUT.",
+          "description": "The filename for restoring the cached messages.",
           "type": "string"
         }
       },
@@ -967,8 +1228,12 @@
     },
     "MsgVpnLinks": {
       "properties": {
+        "authenticationOauthProfilesUri": {
+          "description": "The URI of this Message VPN's collection of OAuth Profile objects. Available since 2.25.",
+          "type": "string"
+        },
         "authenticationOauthProvidersUri": {
-          "description": "The URI of this Message VPN's collection of OAuth Provider objects. Available since 2.13.",
+          "description": "The URI of this Message VPN's collection of OAuth Provider objects. Deprecated since 2.25. Replaced by authenticationOauthProfiles.",
           "type": "string"
         },
         "bridgesUri": {
@@ -1037,10 +1302,11 @@
           "type": "string"
         },
         "mqttSessionVirtualRouter": {
-          "description": "The virtual router of the MQTT Session. The allowed values and their meaning are:\n\n<pre>\n\"primary\" - The MQTT Session belongs to the primary virtual router.\n\"backup\" - The MQTT Session belongs to the backup virtual router.\n</pre>\n",
+          "description": "The virtual router of the MQTT Session. The allowed values and their meaning are:\n\n<pre>\n\"primary\" - The MQTT Session belongs to the primary virtual router.\n\"backup\" - The MQTT Session belongs to the backup virtual router.\n\"auto\" - The MQTT Session is automatically assigned a virtual router at creation, depending on the broker's active-standby role.\n</pre>\n",
           "enum": [
             "primary",
-            "backup"
+            "backup",
+            "auto"
           ],
           "type": "string"
         },
@@ -1124,13 +1390,56 @@
     "MsgVpnQueueCancelReplay": {
       "properties": {
         "forceComplete": {
-          "description": "Force cancellation to complete without waiting for client unbind ack. This attribute is absent from a GET and not updated when absent in a PUT.",
+          "description": "Force cancellation to complete without waiting for client unbind ack.",
           "type": "boolean"
         }
       },
       "type": "object"
     },
     "MsgVpnQueueClearStats": {
+      "properties": {},
+      "type": "object"
+    },
+    "MsgVpnQueueCopyMsgFromQueue": {
+      "properties": {
+        "replicationGroupMsgId": {
+          "description": "The Message to copy, identified by its Replication Group Message ID.",
+          "type": "string"
+        },
+        "sourceQueueName": {
+          "description": "The name of the Queue to copy the message from.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "MsgVpnQueueCopyMsgFromReplayLog": {
+      "properties": {
+        "replicationGroupMsgId": {
+          "description": "The Message to copy, identified by its Replication Group Message ID.",
+          "type": "string"
+        },
+        "sourceReplayLogName": {
+          "description": "The name of the Replay Log to copy the message from.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "MsgVpnQueueCopyMsgFromTopicEndpoint": {
+      "properties": {
+        "replicationGroupMsgId": {
+          "description": "The Message to copy, identified by its Replication Group Message ID.",
+          "type": "string"
+        },
+        "sourceTopicEndpointName": {
+          "description": "The name of the Topic Endpoint to copy the message from.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "MsgVpnQueueDeleteMsgs": {
       "properties": {},
       "type": "object"
     },
@@ -1142,6 +1451,22 @@
         },
         "clearStatsUri": {
           "description": "The URI of this Queue's Clear Stats action.",
+          "type": "string"
+        },
+        "copyMsgFromQueueUri": {
+          "description": "The URI of this Queue's Copy Message From Queue action. Available since 2.29.",
+          "type": "string"
+        },
+        "copyMsgFromReplayLogUri": {
+          "description": "The URI of this Queue's Copy Message From Replay Log action. Available since 2.29.",
+          "type": "string"
+        },
+        "copyMsgFromTopicEndpointUri": {
+          "description": "The URI of this Queue's Copy Message From Topic Endpoint action. Available since 2.29.",
+          "type": "string"
+        },
+        "deleteMsgsUri": {
+          "description": "The URI of this Queue's Delete All Messages action. Available since 2.28.",
           "type": "string"
         },
         "msgsUri": {
@@ -1253,13 +1578,17 @@
     },
     "MsgVpnQueueStartReplay": {
       "properties": {
+        "afterMsg": {
+          "description": "The Message after which to begin replay, identified by its Replication Group Message ID. Available since 2.21.",
+          "type": "string"
+        },
         "fromTime": {
-          "description": "The time to begin replaying messages from. This attribute is absent from a GET and not updated when absent in a PUT. This value represents the number of seconds since 1970-01-01 00:00:00 UTC (Unix time).",
+          "description": "The time to begin replaying messages from. The value must be no less than the time that the replay log was created. To play back the whole log, this parameter must be omitted. This value represents the number of seconds since 1970-01-01 00:00:00 UTC (Unix time).",
           "format": "int32",
           "type": "integer"
         },
         "replayLogName": {
-          "description": "The name of the Replay Log. This attribute is absent from a GET and not updated when absent in a PUT.",
+          "description": "The name of the Replay Log.",
           "type": "string"
         }
       },
@@ -1334,7 +1663,7 @@
     "MsgVpnReplayLogTrimLoggedMsgs": {
       "properties": {
         "olderThanTime": {
-          "description": "The time to use for trimming older messages. This attribute is absent from a GET and not updated when absent in a PUT. This value represents the number of seconds since 1970-01-01 00:00:00 UTC (Unix time).",
+          "description": "The time to use for trimming older messages. This value represents the number of seconds since 1970-01-01 00:00:00 UTC (Unix time).",
           "format": "int32",
           "type": "integer"
         }
@@ -1537,13 +1866,56 @@
     "MsgVpnTopicEndpointCancelReplay": {
       "properties": {
         "forceComplete": {
-          "description": "Force cancellation to complete without waiting for client unbind ack. This attribute is absent from a GET and not updated when absent in a PUT.",
+          "description": "Force cancellation to complete without waiting for client unbind ack.",
           "type": "boolean"
         }
       },
       "type": "object"
     },
     "MsgVpnTopicEndpointClearStats": {
+      "properties": {},
+      "type": "object"
+    },
+    "MsgVpnTopicEndpointCopyMsgFromQueue": {
+      "properties": {
+        "replicationGroupMsgId": {
+          "description": "The Message to copy, identified by its Replication Group Message ID.",
+          "type": "string"
+        },
+        "sourceQueueName": {
+          "description": "The name of the Queue to copy the message from.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "MsgVpnTopicEndpointCopyMsgFromReplayLog": {
+      "properties": {
+        "replicationGroupMsgId": {
+          "description": "The Message to copy, identified by its Replication Group Message ID.",
+          "type": "string"
+        },
+        "sourceReplayLogName": {
+          "description": "The name of the Replay Log to copy the message from.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "MsgVpnTopicEndpointCopyMsgFromTopicEndpoint": {
+      "properties": {
+        "replicationGroupMsgId": {
+          "description": "The Message to copy, identified by its Replication Group Message ID.",
+          "type": "string"
+        },
+        "sourceTopicEndpointName": {
+          "description": "The name of the Topic Endpoint to copy the message from.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "MsgVpnTopicEndpointDeleteMsgs": {
       "properties": {},
       "type": "object"
     },
@@ -1555,6 +1927,22 @@
         },
         "clearStatsUri": {
           "description": "The URI of this Topic Endpoint's Clear Stats action.",
+          "type": "string"
+        },
+        "copyMsgFromQueueUri": {
+          "description": "The URI of this Topic Endpoint's Copy Message From Queue action. Available since 2.29.",
+          "type": "string"
+        },
+        "copyMsgFromReplayLogUri": {
+          "description": "The URI of this Topic Endpoint's Copy Message From Replay Log action. Available since 2.29.",
+          "type": "string"
+        },
+        "copyMsgFromTopicEndpointUri": {
+          "description": "The URI of this Topic Endpoint's Copy Message From Topic Endpoint action. Available since 2.29.",
+          "type": "string"
+        },
+        "deleteMsgsUri": {
+          "description": "The URI of this Topic Endpoint's Delete All Messages action. Available since 2.28.",
           "type": "string"
         },
         "msgsUri": {
@@ -1666,13 +2054,17 @@
     },
     "MsgVpnTopicEndpointStartReplay": {
       "properties": {
+        "afterMsg": {
+          "description": "The Message after which to begin replay, identified by its Replication Group Message ID. Available since 2.21.",
+          "type": "string"
+        },
         "fromTime": {
-          "description": "The time to begin replaying messages from. This attribute is absent from a GET and not updated when absent in a PUT. This value represents the number of seconds since 1970-01-01 00:00:00 UTC (Unix time).",
+          "description": "The time to begin replaying messages from. This value represents the number of seconds since 1970-01-01 00:00:00 UTC (Unix time).",
           "format": "int32",
           "type": "integer"
         },
         "replayLogName": {
-          "description": "The name of the Replay Log. This attribute is absent from a GET and not updated when absent in a PUT.",
+          "description": "The name of the Replay Log.",
           "type": "string"
         }
       },
@@ -1810,6 +2202,72 @@
       ],
       "type": "object"
     },
+    "OauthProfile": {
+      "properties": {
+        "oauthProfileName": {
+          "description": "The name of the OAuth profile.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "OauthProfileClearStats": {
+      "properties": {},
+      "type": "object"
+    },
+    "OauthProfileLinks": {
+      "properties": {
+        "clearStatsUri": {
+          "description": "The URI of this OAuth Profile's Clear Stats action.",
+          "type": "string"
+        },
+        "uri": {
+          "description": "The URI of this OAuth Profile object.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "OauthProfileResponse": {
+      "properties": {
+        "data": {
+          "$ref": "#/definitions/OauthProfile"
+        },
+        "links": {
+          "$ref": "#/definitions/OauthProfileLinks"
+        },
+        "meta": {
+          "$ref": "#/definitions/SempMeta"
+        }
+      },
+      "required": [
+        "meta"
+      ],
+      "type": "object"
+    },
+    "OauthProfilesResponse": {
+      "properties": {
+        "data": {
+          "items": {
+            "$ref": "#/definitions/OauthProfile"
+          },
+          "type": "array"
+        },
+        "links": {
+          "items": {
+            "$ref": "#/definitions/OauthProfileLinks"
+          },
+          "type": "array"
+        },
+        "meta": {
+          "$ref": "#/definitions/SempMeta"
+        }
+      },
+      "required": [
+        "meta"
+      ],
+      "type": "object"
+    },
     "SempError": {
       "properties": {
         "code": {
@@ -1901,8 +2359,77 @@
         }
       },
       "required": [
-        "uri",
         "method"
+      ],
+      "type": "object"
+    },
+    "Session": {
+      "properties": {
+        "sessionId": {
+          "description": "The unique identifier for the session.",
+          "type": "string"
+        },
+        "sessionUsername": {
+          "description": "The username used for authorization.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "SessionDelete": {
+      "properties": {},
+      "type": "object"
+    },
+    "SessionLinks": {
+      "properties": {
+        "deleteUri": {
+          "description": "The URI of this SEMP Session's Delete action.",
+          "type": "string"
+        },
+        "uri": {
+          "description": "The URI of this SEMP Session object.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "SessionResponse": {
+      "properties": {
+        "data": {
+          "$ref": "#/definitions/Session"
+        },
+        "links": {
+          "$ref": "#/definitions/SessionLinks"
+        },
+        "meta": {
+          "$ref": "#/definitions/SempMeta"
+        }
+      },
+      "required": [
+        "meta"
+      ],
+      "type": "object"
+    },
+    "SessionsResponse": {
+      "properties": {
+        "data": {
+          "items": {
+            "$ref": "#/definitions/Session"
+          },
+          "type": "array"
+        },
+        "links": {
+          "items": {
+            "$ref": "#/definitions/SessionLinks"
+          },
+          "type": "array"
+        },
+        "meta": {
+          "$ref": "#/definitions/SempMeta"
+        }
+      },
+      "required": [
+        "meta"
       ],
       "type": "object"
     }
@@ -1914,9 +2441,9 @@
       "name": "Solace",
       "url": "http://www.solace.com"
     },
-    "description": "SEMP (starting in `v2`, see note 1) is a RESTful API for configuring, monitoring, and administering a Solace PubSub+ broker.\n\nSEMP uses URIs to address manageable **resources** of the Solace PubSub+ broker. Resources are individual **objects**, **collections** of objects, or (exclusively in the action API) **actions**. This document applies to the following API:\n\n\nAPI|Base Path|Purpose|Comments\n:---|:---|:---|:---\nAction|/SEMP/v2/action|Performing actions|See note 2\n\n\n\nThe following APIs are also available:\n\n\nAPI|Base Path|Purpose|Comments\n:---|:---|:---|:---\nConfiguration|/SEMP/v2/config|Reading and writing config state|See note 2\nMonitoring|/SEMP/v2/monitor|Querying operational parameters|See note 2\n\n\n\nResources are always nouns, with individual objects being singular and collections being plural.\n\nObjects within a collection are identified by an `obj-id`, which follows the collection name with the form `collection-name/obj-id`.\n\nActions within an object are identified by an `action-id`, which follows the object name with the form `obj-id/action-id`.\n\nSome examples:\n\n```\n/SEMP/v2/config/msgVpns                        ; MsgVpn collection\n/SEMP/v2/config/msgVpns/a                      ; MsgVpn object named \"a\"\n/SEMP/v2/config/msgVpns/a/queues               ; Queue collection in MsgVpn \"a\"\n/SEMP/v2/config/msgVpns/a/queues/b             ; Queue object named \"b\" in MsgVpn \"a\"\n/SEMP/v2/action/msgVpns/a/queues/b/startReplay ; Action that starts a replay on Queue \"b\" in MsgVpn \"a\"\n/SEMP/v2/monitor/msgVpns/a/clients             ; Client collection in MsgVpn \"a\"\n/SEMP/v2/monitor/msgVpns/a/clients/c           ; Client object named \"c\" in MsgVpn \"a\"\n```\n\n## Collection Resources\n\nCollections are unordered lists of objects (unless described as otherwise), and are described by JSON arrays. Each item in the array represents an object in the same manner as the individual object would normally be represented. In the configuration API, the creation of a new object is done through its collection resource.\n\n## Object and Action Resources\n\nObjects are composed of attributes, actions, collections, and other objects. They are described by JSON objects as name/value pairs. The collections and actions of an object are not contained directly in the object's JSON content; rather the content includes an attribute containing a URI which points to the collections and actions. These contained resources must be managed through this URI. At a minimum, every object has one or more identifying attributes, and its own `uri` attribute which contains the URI pointing to itself.\n\nActions are also composed of attributes, and are described by JSON objects as name/value pairs. Unlike objects, however, they are not members of a collection and cannot be retrieved, only performed. Actions only exist in the action API.\n\nAttributes in an object or action may have any (non-exclusively) of the following properties:\n\n\nProperty|Meaning|Comments\n:---|:---|:---\nIdentifying|Attribute is involved in unique identification of the object, and appears in its URI|\nRequired|Attribute must be provided in the request|\nRead-Only|Attribute can only be read, not written|See note 3\nWrite-Only|Attribute can only be written, not read|\nRequires-Disable|Attribute can only be changed when object is disabled|\nDeprecated|Attribute is deprecated, and will disappear in the next SEMP version|\n\n\n\nIn some requests, certain attributes may only be provided in certain combinations with other attributes:\n\n\nRelationship|Meaning\n:---|:---\nRequires|Attribute may only be changed by a request if a particular attribute or combination of attributes is also provided in the request\nConflicts|Attribute may only be provided in a request if a particular attribute or combination of attributes is not also provided in the request\n\n\n\n## HTTP Methods\n\nThe following HTTP methods manipulate resources in accordance with these general principles. Note that some methods are only used in certain APIs:\n\n\nMethod|Resource|Meaning|Request Body|Response Body|Missing Request Attributes\n:---|:---|:---|:---|:---|:---\nPOST|Collection|Create object|Initial attribute values|Object attributes and metadata|Set to default\nPUT|Object|Create or replace object|New attribute values|Object attributes and metadata|Set to default (but see note 4)\nPUT|Action|Performs action|Action arguments|Action metadata|N/A\nPATCH|Object|Update object|New attribute values|Object attributes and metadata|unchanged\nDELETE|Object|Delete object|Empty|Object metadata|N/A\nGET|Object|Get object|Empty|Object attributes and metadata|N/A\nGET|Collection|Get collection|Empty|Object attributes and collection metadata|N/A\n\n\n\n## Common Query Parameters\n\nThe following are some common query parameters that are supported by many method/URI combinations. Individual URIs may document additional parameters. Note that multiple query parameters can be used together in a single URI, separated by the ampersand character. For example:\n\n```\n; Request for the MsgVpns collection using two hypothetical query parameters \"q1\" and \"q2\"\n; with values \"val1\" and \"val2\" respectively\n/SEMP/v2/action/msgVpns?q1=val1&q2=val2\n```\n\n### select\n\nInclude in the response only selected attributes of the object, or exclude from the response selected attributes of the object. Use this query parameter to limit the size of the returned data for each returned object, return only those fields that are desired, or exclude fields that are not desired.\n\nThe value of `select` is a comma-separated list of attribute names. If the list contains attribute names that are not prefaced by `-`, only those attributes are included in the response. If the list contains attribute names that are prefaced by `-`, those attributes are excluded from the response. If the list contains both types, then the difference of the first set of attributes and the second set of attributes is returned. If the list is empty (i.e. `select=`), no attributes are returned.\n\nAll attributes that are prefaced by `-` must follow all attributes that are not prefaced by `-`. In addition, each attribute name in the list must match at least one attribute in the object.\n\nNames may include the `*` wildcard (zero or more characters). Nested attribute names are supported using periods (e.g. `parentName.childName`).\n\nSome examples:\n\n```\n; List of all MsgVpn names\n/SEMP/v2/action/msgVpns?select=msgVpnName\n; List of all MsgVpn and their attributes except for their names\n/SEMP/v2/action/msgVpns?select=-msgVpnName\n; Authentication attributes of MsgVpn \"finance\"\n/SEMP/v2/action/msgVpns/finance?select=authentication*\n; All attributes of MsgVpn \"finance\" except for authentication attributes\n/SEMP/v2/action/msgVpns/finance?select=-authentication*\n; Access related attributes of Queue \"orderQ\" of MsgVpn \"finance\"\n/SEMP/v2/action/msgVpns/finance/queues/orderQ?select=owner,permission\n```\n\n### where\n\nInclude in the response only objects where certain conditions are true. Use this query parameter to limit which objects are returned to those whose attribute values meet the given conditions.\n\nThe value of `where` is a comma-separated list of expressions. All expressions must be true for the object to be included in the response. Each expression takes the form:\n\n```\nexpression  = attribute-name OP value\nOP          = '==' | '!=' | '&lt;' | '&gt;' | '&lt;=' | '&gt;='\n```\n\n`value` may be a number, string, `true`, or `false`, as appropriate for the type of `attribute-name`. Greater-than and less-than comparisons only work for numbers. A `*` in a string `value` is interpreted as a wildcard (zero or more characters). Some examples:\n\n```\n; Only enabled MsgVpns\n/SEMP/v2/action/msgVpns?where=enabled==true\n; Only MsgVpns using basic non-LDAP authentication\n/SEMP/v2/action/msgVpns?where=authenticationBasicEnabled==true,authenticationBasicType!=ldap\n; Only MsgVpns that allow more than 100 client connections\n/SEMP/v2/action/msgVpns?where=maxConnectionCount>100\n; Only MsgVpns with msgVpnName starting with \"B\":\n/SEMP/v2/action/msgVpns?where=msgVpnName==B*\n```\n\n### count\n\nLimit the count of objects in the response. This can be useful to limit the size of the response for large collections. The minimum value for `count` is `1` and the default is `10`. There is also a per-collection maximum value to limit request handling time. For example:\n\n```\n; Up to 25 MsgVpns\n/SEMP/v2/action/msgVpns?count=25\n```\n\n### cursor\n\nThe cursor, or position, for the next page of objects. Cursors are opaque data that should not be created or interpreted by SEMP clients, and should only be used as described below.\n\nWhen a request is made for a collection and there may be additional objects available for retrieval that are not included in the initial response, the response will include a `cursorQuery` field containing a cursor. The value of this field can be specified in the `cursor` query parameter of a subsequent request to retrieve the next page of objects. For convenience, an appropriate URI is constructed automatically by the broker and included in the `nextPageUri` field of the response. This URI can be used directly to retrieve the next page of objects.\n\n## Notes\n\nNote|Description\n:---:|:---\n1|This specification defines SEMP starting in \"v2\", and not the original SEMP \"v1\" interface. Request and response formats between \"v1\" and \"v2\" are entirely incompatible, although both protocols share a common port configuration on the Solace PubSub+ broker. They are differentiated by the initial portion of the URI path, one of either \"/SEMP/\" or \"/SEMP/v2/\"\n2|This API is partially implemented. Only a subset of all objects are available.\n3|Read-only attributes may appear in POST and PUT/PATCH requests. However, if a read-only attribute is not marked as identifying, it will be ignored during a PUT/PATCH.\n4|For PUT, if the SEMP user is not authorized to modify the attribute, its value is left unchanged rather than set to default. In addition, the values of write-only attributes are not set to their defaults on a PUT. If the object does not exist, it is created first.\n\n\n\n",
+    "description": "SEMP (starting in `v2`, see note 1) is a RESTful API for configuring, monitoring, and administering a Solace PubSub+ broker.\n\nSEMP uses URIs to address manageable **resources** of the Solace PubSub+ broker. Resources are individual **objects**, **collections** of objects, or (exclusively in the action API) **actions**. This document applies to the following API:\n\n\nAPI|Base Path|Purpose|Comments\n:---|:---|:---|:---\nAction|/SEMP/v2/action|Performing actions|See note 2\n\n\n\nThe following APIs are also available:\n\n\nAPI|Base Path|Purpose|Comments\n:---|:---|:---|:---\nConfiguration|/SEMP/v2/config|Reading and writing config state|See note 2\nMonitoring|/SEMP/v2/monitor|Querying operational parameters|See note 2\n\n\n\nResources are always nouns, with individual objects being singular and collections being plural.\n\nObjects within a collection are identified by an `obj-id`, which follows the collection name with the form `collection-name/obj-id`.\n\nActions within an object are identified by an `action-id`, which follows the object name with the form `obj-id/action-id`.\n\nSome examples:\n\n```\n/SEMP/v2/config/msgVpns                        ; MsgVpn collection\n/SEMP/v2/config/msgVpns/a                      ; MsgVpn object named \"a\"\n/SEMP/v2/config/msgVpns/a/queues               ; Queue collection in MsgVpn \"a\"\n/SEMP/v2/config/msgVpns/a/queues/b             ; Queue object named \"b\" in MsgVpn \"a\"\n/SEMP/v2/action/msgVpns/a/queues/b/startReplay ; Action that starts a replay on Queue \"b\" in MsgVpn \"a\"\n/SEMP/v2/monitor/msgVpns/a/clients             ; Client collection in MsgVpn \"a\"\n/SEMP/v2/monitor/msgVpns/a/clients/c           ; Client object named \"c\" in MsgVpn \"a\"\n```\n\n## Collection Resources\n\nCollections are unordered lists of objects (unless described as otherwise), and are described by JSON arrays. Each item in the array represents an object in the same manner as the individual object would normally be represented. In the configuration API, the creation of a new object is done through its collection resource.\n\n## Object and Action Resources\n\nObjects are composed of attributes, actions, collections, and other objects. They are described by JSON objects as name/value pairs. The collections and actions of an object are not contained directly in the object's JSON content; rather the content includes an attribute containing a URI which points to the collections and actions. These contained resources must be managed through this URI. At a minimum, every object has one or more identifying attributes, and its own `uri` attribute which contains the URI pointing to itself.\n\nActions are also composed of attributes, and are described by JSON objects as name/value pairs. Unlike objects, however, they are not members of a collection and cannot be retrieved, only performed. Actions only exist in the action API.\n\nAttributes in an object or action may have any combination of the following properties:\n\n\nProperty|Meaning|Comments\n:---|:---|:---\nIdentifying|Attribute is involved in unique identification of the object, and appears in its URI|\nConst|Attribute value can only be chosen during object creation|\nRequired|Attribute must be provided in the request|\nRead-Only|Attribute can only be read, not written.|See note 3\nWrite-Only|Attribute can only be written, not read, unless the attribute is also opaque|See the documentation for the opaque property\nRequires-Disable|Attribute cannot be changed while the object (or the relevant part of the object) is administratively enabled|\nAuto-Disable|Modifying this attribute while the object (or the relevant part of the object) is administratively enabled may be service impacting as one or more attributes will be temporarily disabled to apply the change|\nDeprecated|Attribute is deprecated, and will disappear in the next SEMP version|\nOpaque|Attribute can be set or retrieved in opaque form when the `opaquePassword` query parameter is present|See the `opaquePassword` query parameter documentation\n\n\n\nIn some requests, certain attributes may only be provided in certain combinations with other attributes:\n\n\nRelationship|Meaning\n:---|:---\nRequires|Attribute may only be changed by a request if a particular attribute or combination of attributes is also provided in the request\nConflicts|Attribute may only be provided in a request if a particular attribute or combination of attributes is not also provided in the request\n\n\n\nIn the monitoring API, any non-identifying attribute may not be returned in a GET.\n\n## HTTP Methods\n\nThe following HTTP methods manipulate resources in accordance with these general principles. Note that some methods are only used in certain APIs:\n\n\nMethod|Resource|Meaning|Request Body|Response Body|Notes\n:---|:---|:---|:---|:---|:---\nPOST|Collection|Create object|Initial attribute values|Object attributes and metadata|Absent attributes are set to default. If object already exists, a 400 error is returned\nPUT|Object|Update object|New attribute values|Object attributes and metadata|If does not exist, the object is first created. Absent attributes are set to default, with certain exceptions (see note 4)\nPUT|Action|Performs action|Action arguments|Action metadata|\nPATCH|Object|Update object|New attribute values|Object attributes and metadata|Absent attributes are left unchanged. If the object does not exist, a 404 error is returned\nDELETE|Object|Delete object|Empty|Object metadata|If the object does not exist, a 404 is returned\nGET|Object|Get object|Empty|Object attributes and metadata|If the object does not exist, a 404 is returned\nGET|Collection|Get collection|Empty|Object attributes and collection metadata|If the collection is empty, then an empty collection is returned with a 200 code\n\n\n\n## Common Query Parameters\n\nThe following are some common query parameters that are supported by many method/URI combinations. Individual URIs may document additional parameters. Note that multiple query parameters can be used together in a single URI, separated by the ampersand character. For example:\n\n```\n; Request for the MsgVpns collection using two hypothetical query parameters\n; \"q1\" and \"q2\" with values \"val1\" and \"val2\" respectively\n/SEMP/v2/action/msgVpns?q1=val1&q2=val2\n```\n\n### select\n\nInclude in the response only selected attributes of the object, or exclude from the response selected attributes of the object. Use this query parameter to limit the size of the returned data for each returned object, return only those fields that are desired, or exclude fields that are not desired.\n\nThe value of `select` is a comma-separated list of attribute names. If the list contains attribute names that are not prefaced by `-`, only those attributes are included in the response. If the list contains attribute names that are prefaced by `-`, those attributes are excluded from the response. If the list contains both types, then the difference of the first set of attributes and the second set of attributes is returned. If the list is empty (i.e. `select=`), it is treated the same as if no `select` was provided: all attribute are returned.\n\nAll attributes that are prefaced by `-` must follow all attributes that are not prefaced by `-`. In addition, each attribute name in the list must match at least one attribute in the object.\n\nNames may include the `*` wildcard (zero or more characters). Nested attribute names are supported using periods (e.g. `parentName.childName`).\n\nSome examples:\n\n```\n; List of all MsgVpn names\n/SEMP/v2/action/msgVpns?select=msgVpnName\n; List of all MsgVpn and their attributes except for their names\n/SEMP/v2/action/msgVpns?select=-msgVpnName\n; Authentication attributes of MsgVpn \"finance\"\n/SEMP/v2/action/msgVpns/finance?select=authentication%2A\n; All attributes of MsgVpn \"finance\" except for authentication attributes\n/SEMP/v2/action/msgVpns/finance?select=-authentication%2A\n; Access related attributes of Queue \"orderQ\" of MsgVpn \"finance\"\n/SEMP/v2/action/msgVpns/finance/queues/orderQ?select=owner,permission\n```\n\n### where\n\nInclude in the response only objects where certain conditions are true. Use this query parameter to limit which objects are returned to those whose attribute values meet the given conditions.\n\nThe value of `where` is a comma-separated list of expressions. All expressions must be true for the object to be included in the response. Each expression takes the form:\n\n```\nexpression  = attribute-name OP value\nOP          = '==' | '!=' | '<' | '>' | '<=' | '>='\n```\n\n`value` may be a number, string, `true`, or `false`, as appropriate for the type of `attribute-name`. Greater-than and less-than comparisons only work for numbers. A `*` in a string `value` is interpreted as a wildcard (zero or more characters). Some examples:\n\n```\n; Only enabled MsgVpns\n/SEMP/v2/action/msgVpns?where=enabled%3D%3Dtrue\n; Only MsgVpns using basic non-LDAP authentication\n/SEMP/v2/action/msgVpns?where=authenticationBasicEnabled%3D%3Dtrue,authenticationBasicType%21%3Dldap\n; Only MsgVpns that allow more than 100 client connections\n/SEMP/v2/action/msgVpns?where=maxConnectionCount%3E100\n; Only MsgVpns with msgVpnName starting with \"B\":\n/SEMP/v2/action/msgVpns?where=msgVpnName%3D%3DB%2A\n```\n\n### count\n\nLimit the count of objects in the response. This can be useful to limit the size of the response for large collections. The minimum value for `count` is `1` and the default is `10`. There is also a per-collection maximum value to limit request handling time.\n\n`count` does not guarantee that a minimum number of objects will be returned. A page may contain fewer than `count` objects or even be empty. Additional objects may nonetheless be available for retrieval on subsequent pages. See the `cursor` query parameter documentation for more information on paging.\n\nFor example:\n```\n; Up to 25 MsgVpns\n/SEMP/v2/action/msgVpns?count=25\n```\n\n### cursor\n\nThe cursor, or position, for the next page of objects. Cursors are opaque data that should not be created or interpreted by SEMP clients, and should only be used as described below.\n\nWhen a request is made for a collection and there may be additional objects available for retrieval that are not included in the initial response, the response will include a `cursorQuery` field containing a cursor. The value of this field can be specified in the `cursor` query parameter of a subsequent request to retrieve the next page of objects.\n\nApplications must continue to use the `cursorQuery` if one is provided in order to retrieve the full set of objects associated with the request, even if a page contains fewer than the requested number of objects (see the `count` query parameter documentation) or is empty.\n\n### opaquePassword\n\nAttributes with the opaque property are also write-only and so cannot normally be retrieved in a GET. However, when a password is provided in the `opaquePassword` query parameter, attributes with the opaque property are retrieved in a GET in opaque form, encrypted with this password. The query parameter can also be used on a POST, PATCH, or PUT to set opaque attributes using opaque attribute values retrieved in a GET, so long as:\n\n1. the same password that was used to retrieve the opaque attribute values is provided; and\n\n2. the broker to which the request is being sent has the same major and minor SEMP version as the broker that produced the opaque attribute values.\n\nThe password provided in the query parameter must be a minimum of 8 characters and a maximum of 128 characters.\n\nThe query parameter can only be used in the configuration API, and only over HTTPS.\n\n## Authentication\n\nWhen a client makes its first SEMPv2 request, it must supply a username and password using HTTP Basic authentication, or an OAuth token or tokens using HTTP Bearer authentication.\n\nWhen HTTP Basic authentication is used, the broker returns a cookie containing a session key. The client can omit the username and password from subsequent requests, because the broker can use the session cookie for authentication instead. When the session expires or is deleted, the client must provide the username and password again, and the broker creates a new session.\n\nThere are a limited number of session slots available on the broker. The broker returns 529 No SEMP Session Available if it is not able to allocate a session.\n\nIf certain attributes\u2014such as a user's password\u2014are changed, the broker automatically deletes the affected sessions. These attributes are documented below. However, changes in external user configuration data stored on a RADIUS or LDAP server do not trigger the broker to delete the associated session(s), therefore you must do this manually, if required.\n\nA client can retrieve its current session information using the /about/user endpoint and delete its own session using the /about/user/logout endpoint. A client with appropriate permissions can also manage all sessions using the /sessions endpoint.\n\nSessions are not created when authenticating with an OAuth token or tokens using HTTP Bearer authentication. If a session cookie is provided, it is ignored.\n\n## Help\n\nVisit [our website](https://solace.com) to learn more about Solace.\n\nYou can also download the SEMP API specifications by clicking [here](https://solace.com/downloads/).\n\nIf you need additional support, please contact us at [support@solace.com](mailto:support@solace.com).\n\n## Notes\n\nNote|Description\n:---:|:---\n1|This specification defines SEMP starting in \"v2\", and not the original SEMP \"v1\" interface. Request and response formats between \"v1\" and \"v2\" are entirely incompatible, although both protocols share a common port configuration on the Solace PubSub+ broker. They are differentiated by the initial portion of the URI path, one of either \"/SEMP/\" or \"/SEMP/v2/\"\n2|This API is partially implemented. Only a subset of all objects are available.\n3|Read-only attributes may appear in POST and PUT/PATCH requests. However, if a read-only attribute is not marked as identifying, it will be ignored during a PUT/PATCH.\n4|On a PUT, if the SEMP user is not authorized to modify the attribute, its value is left unchanged rather than set to default. In addition, the values of write-only attributes are not set to their defaults on a PUT, except in the following two cases: there is a mutual requires relationship with another non-write-only attribute, both attributes are absent from the request, and the non-write-only attribute is not currently set to its default value; or the attribute is also opaque and the `opaquePassword` query parameter is provided in the request.\n\n",
     "title": "SEMP (Solace Element Management Protocol)",
-    "version": "2.14"
+    "version": "2.34"
   },
   "parameters": {
     "countQuery": {
@@ -2036,9 +2563,13 @@
     },
     "/about/api": {
       "get": {
-        "description": "Get an API Description object.\nThe API Description object provides metadata about the SEMP API.\n\nA SEMP client authorized with a minimum access scope/level of \"global/none\" is required to perform this operation.\n\nThis has been available since 2.11.",
+        "description": "Get an API Description object.\n\nThe API Description object provides metadata about the SEMP API.\n\n\n\nA SEMP client authorized with a minimum access scope/level of \"global/none\" is required to perform this operation.\n\nThis has been available since 2.11.",
         "operationId": "getAboutApi",
-        "parameters": [],
+        "parameters": [
+          {
+            "$ref": "#/parameters/selectQuery"
+          }
+        ],
         "produces": [
           "application/json"
         ],
@@ -2070,7 +2601,7 @@
     },
     "/about/user": {
       "get": {
-        "description": "Get a User object.\n\nThis provides information about the access level for the username used to access the SEMP API.\n\n\n\nA SEMP client authorized with a minimum access scope/level of \"global/none\" is required to perform this operation.\n\nThis has been available since 2.11.",
+        "description": "Get a User object.\n\nSession and access level information about the user accessing the SEMP API.\n\n\n\nA SEMP client authorized with a minimum access scope/level of \"global/none\" is required to perform this operation.\n\nThis has been available since 2.11.",
         "operationId": "getAboutUser",
         "parameters": [
           {
@@ -2100,6 +2631,50 @@
           }
         ],
         "summary": "Get a User object.",
+        "tags": [
+          "all",
+          "about"
+        ]
+      }
+    },
+    "/about/user/logout": {
+      "put": {
+        "description": "Logout of the current session.\n\n\n\nA SEMP client authorized with a minimum access scope/level of \"global/none\" is required to perform this operation.\n\nThis has been available since 2.21.",
+        "operationId": "doAboutUserLogout",
+        "parameters": [
+          {
+            "description": "The Logout action's attributes.",
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/AboutUserLogout"
+            }
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "The action was successfully performed.",
+            "schema": {
+              "$ref": "#/definitions/SempMetaOnlyResponse"
+            }
+          },
+          "default": {
+            "description": "The action was not successfully performed.",
+            "schema": {
+              "$ref": "#/definitions/SempMetaOnlyResponse"
+            }
+          }
+        },
+        "security": [
+          {
+            "basicAuth": []
+          }
+        ],
+        "summary": "Logout of the current session.",
         "tags": [
           "all",
           "about"
@@ -2200,7 +2775,8 @@
     },
     "/certAuthorities": {
       "get": {
-        "description": "Get a list of Certificate Authority objects.\n\nClients can authenticate with the message broker over TLS by presenting a valid client certificate. The message broker authenticates the client certificate by constructing a full certificate chain (from the client certificate to intermediate CAs to a configured root CA). The intermediate CAs in this chain can be provided by the client, or configured in the message broker. The root CA must be configured on the message broker.\n\n\nAttribute|Identifying|Deprecated\n:---|:---:|:---:\ncertAuthorityName|x|\n\n\n\nA SEMP client authorized with a minimum access scope/level of \"global/read-only\" is required to perform this operation.\n\nThis has been available since 2.13.",
+        "deprecated": true,
+        "description": "Get a list of Certificate Authority objects.\n\nClients can authenticate with the message broker over TLS by presenting a valid client certificate. The message broker authenticates the client certificate by constructing a full certificate chain (from the client certificate to intermediate CAs to a configured root CA). The intermediate CAs in this chain can be provided by the client, or configured in the message broker. The root CA must be configured on the message broker.\n\n\nAttribute|Identifying|Deprecated\n:---|:---:|:---:\ncertAuthorityName|x|x\n\n\n\nA SEMP client authorized with a minimum access scope/level of \"global/read-only\" is required to perform this operation.\n\nThis has been deprecated since 2.19. Replaced by clientCertAuthorities and domainCertAuthorities.",
         "operationId": "getCertAuthorities",
         "parameters": [
           {
@@ -2247,7 +2823,8 @@
     },
     "/certAuthorities/{certAuthorityName}": {
       "get": {
-        "description": "Get a Certificate Authority object.\n\nClients can authenticate with the message broker over TLS by presenting a valid client certificate. The message broker authenticates the client certificate by constructing a full certificate chain (from the client certificate to intermediate CAs to a configured root CA). The intermediate CAs in this chain can be provided by the client, or configured in the message broker. The root CA must be configured on the message broker.\n\n\nAttribute|Identifying|Deprecated\n:---|:---:|:---:\ncertAuthorityName|x|\n\n\n\nA SEMP client authorized with a minimum access scope/level of \"global/read-only\" is required to perform this operation.\n\nThis has been available since 2.13.",
+        "deprecated": true,
+        "description": "Get a Certificate Authority object.\n\nClients can authenticate with the message broker over TLS by presenting a valid client certificate. The message broker authenticates the client certificate by constructing a full certificate chain (from the client certificate to intermediate CAs to a configured root CA). The intermediate CAs in this chain can be provided by the client, or configured in the message broker. The root CA must be configured on the message broker.\n\n\nAttribute|Identifying|Deprecated\n:---|:---:|:---:\ncertAuthorityName|x|x\n\n\n\nA SEMP client authorized with a minimum access scope/level of \"global/read-only\" is required to perform this operation.\n\nThis has been deprecated since 2.19. Replaced by clientCertAuthorities and domainCertAuthorities.",
         "operationId": "getCertAuthority",
         "parameters": [
           {
@@ -2292,7 +2869,8 @@
     },
     "/certAuthorities/{certAuthorityName}/refreshCrl": {
       "put": {
-        "description": "Refresh the CRL file for the Certificate Authority.\n\n\n\nA SEMP client authorized with a minimum access scope/level of \"global/read-write\" is required to perform this operation.\n\nThis has been available since 2.13.",
+        "deprecated": true,
+        "description": "Refresh the CRL file for the Certificate Authority.\n\n\n\nA SEMP client authorized with a minimum access scope/level of \"global/read-write\" is required to perform this operation.\n\nThis has been deprecated since 2.19. Replaced by clientCertAuthorities.",
         "operationId": "doCertAuthorityRefreshCrl",
         "parameters": [
           {
@@ -2338,6 +2916,450 @@
         "tags": [
           "all",
           "certAuthority"
+        ]
+      }
+    },
+    "/clientCertAuthorities": {
+      "get": {
+        "description": "Get a list of Client Certificate Authority objects.\n\nClients can authenticate with the message broker over TLS by presenting a valid client certificate. The message broker authenticates the client certificate by constructing a full certificate chain (from the client certificate to intermediate CAs to a configured root CA). The intermediate CAs in this chain can be provided by the client, or configured in the message broker. The root CA must be configured on the message broker.\n\n\nAttribute|Identifying|Deprecated\n:---|:---:|:---:\ncertAuthorityName|x|\n\n\n\nA SEMP client authorized with a minimum access scope/level of \"global/read-only\" is required to perform this operation.\n\nThis has been available since 2.19.",
+        "operationId": "getClientCertAuthorities",
+        "parameters": [
+          {
+            "$ref": "#/parameters/countQuery"
+          },
+          {
+            "$ref": "#/parameters/cursorQuery"
+          },
+          {
+            "$ref": "#/parameters/whereQuery"
+          },
+          {
+            "$ref": "#/parameters/selectQuery"
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "The list of Client Certificate Authority objects' attributes, and the request metadata.",
+            "schema": {
+              "$ref": "#/definitions/ClientCertAuthoritiesResponse"
+            }
+          },
+          "default": {
+            "description": "The error response.",
+            "schema": {
+              "$ref": "#/definitions/SempMetaOnlyResponse"
+            }
+          }
+        },
+        "security": [
+          {
+            "basicAuth": []
+          }
+        ],
+        "summary": "Get a list of Client Certificate Authority objects.",
+        "tags": [
+          "all",
+          "clientCertAuthority"
+        ]
+      }
+    },
+    "/clientCertAuthorities/{certAuthorityName}": {
+      "get": {
+        "description": "Get a Client Certificate Authority object.\n\nClients can authenticate with the message broker over TLS by presenting a valid client certificate. The message broker authenticates the client certificate by constructing a full certificate chain (from the client certificate to intermediate CAs to a configured root CA). The intermediate CAs in this chain can be provided by the client, or configured in the message broker. The root CA must be configured on the message broker.\n\n\nAttribute|Identifying|Deprecated\n:---|:---:|:---:\ncertAuthorityName|x|\n\n\n\nA SEMP client authorized with a minimum access scope/level of \"global/read-only\" is required to perform this operation.\n\nThis has been available since 2.19.",
+        "operationId": "getClientCertAuthority",
+        "parameters": [
+          {
+            "description": "The name of the Certificate Authority.",
+            "in": "path",
+            "name": "certAuthorityName",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "$ref": "#/parameters/selectQuery"
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "The Client Certificate Authority object's attributes, and the request metadata.",
+            "schema": {
+              "$ref": "#/definitions/ClientCertAuthorityResponse"
+            }
+          },
+          "default": {
+            "description": "The error response.",
+            "schema": {
+              "$ref": "#/definitions/SempMetaOnlyResponse"
+            }
+          }
+        },
+        "security": [
+          {
+            "basicAuth": []
+          }
+        ],
+        "summary": "Get a Client Certificate Authority object.",
+        "tags": [
+          "all",
+          "clientCertAuthority"
+        ]
+      }
+    },
+    "/clientCertAuthorities/{certAuthorityName}/refreshCrl": {
+      "put": {
+        "description": "Refresh the CRL file for the Client Certificate Authority.\n\n\n\nA SEMP client authorized with a minimum access scope/level of \"global/read-write\" is required to perform this operation.\n\nThis has been available since 2.19.",
+        "operationId": "doClientCertAuthorityRefreshCrl",
+        "parameters": [
+          {
+            "description": "The name of the Certificate Authority.",
+            "in": "path",
+            "name": "certAuthorityName",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "The Refresh CRL action's attributes.",
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/ClientCertAuthorityRefreshCrl"
+            }
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "The action was successfully performed.",
+            "schema": {
+              "$ref": "#/definitions/SempMetaOnlyResponse"
+            }
+          },
+          "default": {
+            "description": "The action was not successfully performed.",
+            "schema": {
+              "$ref": "#/definitions/SempMetaOnlyResponse"
+            }
+          }
+        },
+        "security": [
+          {
+            "basicAuth": []
+          }
+        ],
+        "summary": "Refresh the CRL file for the Client Certificate Authority.",
+        "tags": [
+          "all",
+          "clientCertAuthority"
+        ]
+      }
+    },
+    "/configSyncAssertLeaderMsgVpn": {
+      "put": {
+        "description": "Assert leadership of the specified Config Sync table, forcing any other leader's content to be overwritten with our own. Use whenever a High Availability pair fall out of sync. Config Sync must be a leader for the selected table.\n\n\nAttribute|Required|Deprecated\n:---|:---:|:---:\nmsgVpnName|x|\n\n\n\nA SEMP client authorized with a minimum access scope/level of \"vpn/read-write\" is required to perform this operation.\n\nThis has been available since 2.22.",
+        "operationId": "doConfigSyncAssertLeaderMsgVpn",
+        "parameters": [
+          {
+            "description": "The Assert Leader Message VPN action's attributes.",
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/ConfigSyncAssertLeaderMsgVpn"
+            }
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "The action was successfully performed.",
+            "schema": {
+              "$ref": "#/definitions/SempMetaOnlyResponse"
+            }
+          },
+          "default": {
+            "description": "The action was not successfully performed.",
+            "schema": {
+              "$ref": "#/definitions/SempMetaOnlyResponse"
+            }
+          }
+        },
+        "security": [
+          {
+            "basicAuth": []
+          }
+        ],
+        "summary": "Assert leadership of the specified Config Sync table, forcing any other leader's content to be overwritten with our own. Use whenever a High Availability pair fall out of sync. Config Sync must be a leader for the selected table.",
+        "tags": [
+          "all"
+        ]
+      }
+    },
+    "/configSyncAssertLeaderRouter": {
+      "put": {
+        "description": "Assert leadership of the specified Config Sync table, forcing any other leader's content to be overwritten with our own. Use whenever a High Availability pair fall out of sync. Config Sync must be a leader for the selected table.\n\n\n\nA SEMP client authorized with a minimum access scope/level of \"global/read-write\" is required to perform this operation.\n\nThis has been available since 2.22.",
+        "operationId": "doConfigSyncAssertLeaderRouter",
+        "parameters": [
+          {
+            "description": "The Assert Leader Router action's attributes.",
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/ConfigSyncAssertLeaderRouter"
+            }
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "The action was successfully performed.",
+            "schema": {
+              "$ref": "#/definitions/SempMetaOnlyResponse"
+            }
+          },
+          "default": {
+            "description": "The action was not successfully performed.",
+            "schema": {
+              "$ref": "#/definitions/SempMetaOnlyResponse"
+            }
+          }
+        },
+        "security": [
+          {
+            "basicAuth": []
+          }
+        ],
+        "summary": "Assert leadership of the specified Config Sync table, forcing any other leader's content to be overwritten with our own. Use whenever a High Availability pair fall out of sync. Config Sync must be a leader for the selected table.",
+        "tags": [
+          "all"
+        ]
+      }
+    },
+    "/configSyncResyncFollowerMsgVpn": {
+      "put": {
+        "description": "Resync the selected Config Sync table, forcing this follower's content to be overwritten with that from a leader. Config Sync must be a follower for the selected table.\n\n\nAttribute|Required|Deprecated\n:---|:---:|:---:\nmsgVpnName|x|\n\n\n\nA SEMP client authorized with a minimum access scope/level of \"vpn/read-write\" is required to perform this operation.\n\nThis has been available since 2.22.",
+        "operationId": "doConfigSyncResyncFollowerMsgVpn",
+        "parameters": [
+          {
+            "description": "The Resync Follower Message VPN action's attributes.",
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/ConfigSyncResyncFollowerMsgVpn"
+            }
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "The action was successfully performed.",
+            "schema": {
+              "$ref": "#/definitions/SempMetaOnlyResponse"
+            }
+          },
+          "default": {
+            "description": "The action was not successfully performed.",
+            "schema": {
+              "$ref": "#/definitions/SempMetaOnlyResponse"
+            }
+          }
+        },
+        "security": [
+          {
+            "basicAuth": []
+          }
+        ],
+        "summary": "Resync the selected Config Sync table, forcing this follower's content to be overwritten with that from a leader. Config Sync must be a follower for the selected table.",
+        "tags": [
+          "all"
+        ]
+      }
+    },
+    "/configSyncResyncLeaderMsgVpn": {
+      "put": {
+        "description": "Resync the selected Config Sync table, forcing this leader's content to be overwritten with that from a leader. Config Sync must be a leader for the selected table.\n\n\nAttribute|Required|Deprecated\n:---|:---:|:---:\nmsgVpnName|x|\n\n\n\nA SEMP client authorized with a minimum access scope/level of \"vpn/read-write\" is required to perform this operation.\n\nThis has been available since 2.22.",
+        "operationId": "doConfigSyncResyncLeaderMsgVpn",
+        "parameters": [
+          {
+            "description": "The Resync Leader Message VPN action's attributes.",
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/ConfigSyncResyncLeaderMsgVpn"
+            }
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "The action was successfully performed.",
+            "schema": {
+              "$ref": "#/definitions/SempMetaOnlyResponse"
+            }
+          },
+          "default": {
+            "description": "The action was not successfully performed.",
+            "schema": {
+              "$ref": "#/definitions/SempMetaOnlyResponse"
+            }
+          }
+        },
+        "security": [
+          {
+            "basicAuth": []
+          }
+        ],
+        "summary": "Resync the selected Config Sync table, forcing this leader's content to be overwritten with that from a leader. Config Sync must be a leader for the selected table.",
+        "tags": [
+          "all"
+        ]
+      }
+    },
+    "/configSyncResyncLeaderRouter": {
+      "put": {
+        "description": "Resync the selected Config Sync table, forcing this leader's content to be overwritten with that from a leader. Config Sync must be a leader for the selected table.\n\n\n\nA SEMP client authorized with a minimum access scope/level of \"global/read-write\" is required to perform this operation.\n\nThis has been available since 2.22.",
+        "operationId": "doConfigSyncResyncLeaderRouter",
+        "parameters": [
+          {
+            "description": "The Resync Leader Router action's attributes.",
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/ConfigSyncResyncLeaderRouter"
+            }
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "The action was successfully performed.",
+            "schema": {
+              "$ref": "#/definitions/SempMetaOnlyResponse"
+            }
+          },
+          "default": {
+            "description": "The action was not successfully performed.",
+            "schema": {
+              "$ref": "#/definitions/SempMetaOnlyResponse"
+            }
+          }
+        },
+        "security": [
+          {
+            "basicAuth": []
+          }
+        ],
+        "summary": "Resync the selected Config Sync table, forcing this leader's content to be overwritten with that from a leader. Config Sync must be a leader for the selected table.",
+        "tags": [
+          "all"
+        ]
+      }
+    },
+    "/guaranteedMsgingDefragmentMsgSpoolFilesStart": {
+      "put": {
+        "description": "Start a spool file defragmentation run.\n\n\n\nA SEMP client authorized with a minimum access scope/level of \"global/read-write\" is required to perform this operation.\n\nThis has been available since 2.18.",
+        "operationId": "doGuaranteedMsgingDefragmentMsgSpoolFilesStart",
+        "parameters": [
+          {
+            "description": "The Start Defragmentation action's attributes.",
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/GuaranteedMsgingDefragmentMsgSpoolFilesStart"
+            }
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "The action was successfully performed.",
+            "schema": {
+              "$ref": "#/definitions/SempMetaOnlyResponse"
+            }
+          },
+          "default": {
+            "description": "The action was not successfully performed.",
+            "schema": {
+              "$ref": "#/definitions/SempMetaOnlyResponse"
+            }
+          }
+        },
+        "security": [
+          {
+            "basicAuth": []
+          }
+        ],
+        "summary": "Start a spool file defragmentation run.",
+        "tags": [
+          "all"
+        ]
+      }
+    },
+    "/guaranteedMsgingDefragmentMsgSpoolFilesStop": {
+      "put": {
+        "description": "Stop a spool file defragmentation run.\n\n\n\nA SEMP client authorized with a minimum access scope/level of \"global/read-write\" is required to perform this operation.\n\nThis has been available since 2.18.",
+        "operationId": "doGuaranteedMsgingDefragmentMsgSpoolFilesStop",
+        "parameters": [
+          {
+            "description": "The Stop Defragmentation action's attributes.",
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/GuaranteedMsgingDefragmentMsgSpoolFilesStop"
+            }
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "The action was successfully performed.",
+            "schema": {
+              "$ref": "#/definitions/SempMetaOnlyResponse"
+            }
+          },
+          "default": {
+            "description": "The action was not successfully performed.",
+            "schema": {
+              "$ref": "#/definitions/SempMetaOnlyResponse"
+            }
+          }
+        },
+        "security": [
+          {
+            "basicAuth": []
+          }
+        ],
+        "summary": "Stop a spool file defragmentation run.",
+        "tags": [
+          "all"
         ]
       }
     },
@@ -2433,9 +3455,177 @@
         ]
       }
     },
+    "/msgVpns/{msgVpnName}/authenticationOauthProfiles": {
+      "get": {
+        "description": "Get a list of OAuth Profile objects.\n\nOAuth profiles specify how to securely authenticate to an OAuth provider.\n\n\nAttribute|Identifying|Deprecated\n:---|:---:|:---:\nmsgVpnName|x|\noauthProfileName|x|\n\n\n\nA SEMP client authorized with a minimum access scope/level of \"vpn/read-only\" is required to perform this operation.\n\nThis has been available since 2.25.",
+        "operationId": "getMsgVpnAuthenticationOauthProfiles",
+        "parameters": [
+          {
+            "description": "The name of the Message VPN.",
+            "in": "path",
+            "name": "msgVpnName",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "$ref": "#/parameters/countQuery"
+          },
+          {
+            "$ref": "#/parameters/cursorQuery"
+          },
+          {
+            "$ref": "#/parameters/whereQuery"
+          },
+          {
+            "$ref": "#/parameters/selectQuery"
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "The list of OAuth Profile objects' attributes, and the request metadata.",
+            "schema": {
+              "$ref": "#/definitions/MsgVpnAuthenticationOauthProfilesResponse"
+            }
+          },
+          "default": {
+            "description": "The error response.",
+            "schema": {
+              "$ref": "#/definitions/SempMetaOnlyResponse"
+            }
+          }
+        },
+        "security": [
+          {
+            "basicAuth": []
+          }
+        ],
+        "summary": "Get a list of OAuth Profile objects.",
+        "tags": [
+          "all",
+          "msgVpn",
+          "authenticationOauthProfile"
+        ]
+      }
+    },
+    "/msgVpns/{msgVpnName}/authenticationOauthProfiles/{oauthProfileName}": {
+      "get": {
+        "description": "Get an OAuth Profile object.\n\nOAuth profiles specify how to securely authenticate to an OAuth provider.\n\n\nAttribute|Identifying|Deprecated\n:---|:---:|:---:\nmsgVpnName|x|\noauthProfileName|x|\n\n\n\nA SEMP client authorized with a minimum access scope/level of \"vpn/read-only\" is required to perform this operation.\n\nThis has been available since 2.25.",
+        "operationId": "getMsgVpnAuthenticationOauthProfile",
+        "parameters": [
+          {
+            "description": "The name of the Message VPN.",
+            "in": "path",
+            "name": "msgVpnName",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "The name of the OAuth profile.",
+            "in": "path",
+            "name": "oauthProfileName",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "$ref": "#/parameters/selectQuery"
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "The OAuth Profile object's attributes, and the request metadata.",
+            "schema": {
+              "$ref": "#/definitions/MsgVpnAuthenticationOauthProfileResponse"
+            }
+          },
+          "default": {
+            "description": "The error response.",
+            "schema": {
+              "$ref": "#/definitions/SempMetaOnlyResponse"
+            }
+          }
+        },
+        "security": [
+          {
+            "basicAuth": []
+          }
+        ],
+        "summary": "Get an OAuth Profile object.",
+        "tags": [
+          "all",
+          "msgVpn",
+          "authenticationOauthProfile"
+        ]
+      }
+    },
+    "/msgVpns/{msgVpnName}/authenticationOauthProfiles/{oauthProfileName}/clearStats": {
+      "put": {
+        "description": "Clear the statistics for the OAuth Profile.\n\n\n\nA SEMP client authorized with a minimum access scope/level of \"vpn/read-write\" is required to perform this operation.\n\nThis has been available since 2.25.",
+        "operationId": "doMsgVpnAuthenticationOauthProfileClearStats",
+        "parameters": [
+          {
+            "description": "The name of the Message VPN.",
+            "in": "path",
+            "name": "msgVpnName",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "The name of the OAuth profile.",
+            "in": "path",
+            "name": "oauthProfileName",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "The Clear Stats action's attributes.",
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/MsgVpnAuthenticationOauthProfileClearStats"
+            }
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "The action was successfully performed.",
+            "schema": {
+              "$ref": "#/definitions/SempMetaOnlyResponse"
+            }
+          },
+          "default": {
+            "description": "The action was not successfully performed.",
+            "schema": {
+              "$ref": "#/definitions/SempMetaOnlyResponse"
+            }
+          }
+        },
+        "security": [
+          {
+            "basicAuth": []
+          }
+        ],
+        "summary": "Clear the statistics for the OAuth Profile.",
+        "tags": [
+          "all",
+          "msgVpn",
+          "authenticationOauthProfile"
+        ]
+      }
+    },
     "/msgVpns/{msgVpnName}/authenticationOauthProviders": {
       "get": {
-        "description": "Get a list of OAuth Provider objects.\n\nOAuth providers.\n\n\nAttribute|Identifying|Deprecated\n:---|:---:|:---:\nmsgVpnName|x|\noauthProviderName|x|\n\n\n\nA SEMP client authorized with a minimum access scope/level of \"vpn/read-only\" is required to perform this operation.\n\nThis has been available since 2.13.",
+        "deprecated": true,
+        "description": "Get a list of OAuth Provider objects.\n\nOAuth Providers contain information about the issuer of an OAuth token that is needed to validate the token and derive a client username from it.\n\n\nAttribute|Identifying|Deprecated\n:---|:---:|:---:\nmsgVpnName|x|x\noauthProviderName|x|x\n\n\n\nA SEMP client authorized with a minimum access scope/level of \"vpn/read-only\" is required to perform this operation.\n\nThis has been deprecated since 2.25. Replaced by authenticationOauthProfiles.",
         "operationId": "getMsgVpnAuthenticationOauthProviders",
         "parameters": [
           {
@@ -2490,7 +3680,8 @@
     },
     "/msgVpns/{msgVpnName}/authenticationOauthProviders/{oauthProviderName}": {
       "get": {
-        "description": "Get an OAuth Provider object.\n\nOAuth providers.\n\n\nAttribute|Identifying|Deprecated\n:---|:---:|:---:\nmsgVpnName|x|\noauthProviderName|x|\n\n\n\nA SEMP client authorized with a minimum access scope/level of \"vpn/read-only\" is required to perform this operation.\n\nThis has been available since 2.13.",
+        "deprecated": true,
+        "description": "Get an OAuth Provider object.\n\nOAuth Providers contain information about the issuer of an OAuth token that is needed to validate the token and derive a client username from it.\n\n\nAttribute|Identifying|Deprecated\n:---|:---:|:---:\nmsgVpnName|x|x\noauthProviderName|x|x\n\n\n\nA SEMP client authorized with a minimum access scope/level of \"vpn/read-only\" is required to perform this operation.\n\nThis has been deprecated since 2.25. Replaced by authenticationOauthProfiles.",
         "operationId": "getMsgVpnAuthenticationOauthProvider",
         "parameters": [
           {
@@ -2543,7 +3734,8 @@
     },
     "/msgVpns/{msgVpnName}/authenticationOauthProviders/{oauthProviderName}/clearStats": {
       "put": {
-        "description": "Clear the statistics for the OAuth Provider.\n\n\n\nA SEMP client authorized with a minimum access scope/level of \"vpn/read-write\" is required to perform this operation.\n\nThis has been available since 2.13.",
+        "deprecated": true,
+        "description": "Clear the statistics for the OAuth Provider.\n\n\n\nA SEMP client authorized with a minimum access scope/level of \"vpn/read-write\" is required to perform this operation.\n\nThis has been deprecated since 2.25. authenticationOauthProviders replaced by authenticationOauthProfiles.",
         "operationId": "doMsgVpnAuthenticationOauthProviderClearStats",
         "parameters": [
           {
@@ -4947,6 +6139,242 @@
         ]
       }
     },
+    "/msgVpns/{msgVpnName}/queues/{queueName}/copyMsgFromQueue": {
+      "put": {
+        "description": "Copy a message from another Queue to this Queue.\n\n\nAttribute|Required|Deprecated\n:---|:---:|:---:\nreplicationGroupMsgId|x|\nsourceQueueName|x|\n\n\n\nA SEMP client authorized with a minimum access scope/level of \"vpn/read-write\" is required to perform this operation.\n\nThis has been available since 2.29.",
+        "operationId": "doMsgVpnQueueCopyMsgFromQueue",
+        "parameters": [
+          {
+            "description": "The name of the Message VPN.",
+            "in": "path",
+            "name": "msgVpnName",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "The name of the Queue.",
+            "in": "path",
+            "name": "queueName",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "The Copy Message From Queue action's attributes.",
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/MsgVpnQueueCopyMsgFromQueue"
+            }
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "The action was successfully performed.",
+            "schema": {
+              "$ref": "#/definitions/SempMetaOnlyResponse"
+            }
+          },
+          "default": {
+            "description": "The action was not successfully performed.",
+            "schema": {
+              "$ref": "#/definitions/SempMetaOnlyResponse"
+            }
+          }
+        },
+        "security": [
+          {
+            "basicAuth": []
+          }
+        ],
+        "summary": "Copy a message from another Queue to this Queue.",
+        "tags": [
+          "all",
+          "msgVpn",
+          "queue"
+        ]
+      }
+    },
+    "/msgVpns/{msgVpnName}/queues/{queueName}/copyMsgFromReplayLog": {
+      "put": {
+        "description": "Copy a message from a Replay Log to this Queue.\n\n\nAttribute|Required|Deprecated\n:---|:---:|:---:\nreplicationGroupMsgId|x|\nsourceReplayLogName|x|\n\n\n\nA SEMP client authorized with a minimum access scope/level of \"vpn/read-write\" is required to perform this operation.\n\nThis has been available since 2.29.",
+        "operationId": "doMsgVpnQueueCopyMsgFromReplayLog",
+        "parameters": [
+          {
+            "description": "The name of the Message VPN.",
+            "in": "path",
+            "name": "msgVpnName",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "The name of the Queue.",
+            "in": "path",
+            "name": "queueName",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "The Copy Message From Replay Log action's attributes.",
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/MsgVpnQueueCopyMsgFromReplayLog"
+            }
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "The action was successfully performed.",
+            "schema": {
+              "$ref": "#/definitions/SempMetaOnlyResponse"
+            }
+          },
+          "default": {
+            "description": "The action was not successfully performed.",
+            "schema": {
+              "$ref": "#/definitions/SempMetaOnlyResponse"
+            }
+          }
+        },
+        "security": [
+          {
+            "basicAuth": []
+          }
+        ],
+        "summary": "Copy a message from a Replay Log to this Queue.",
+        "tags": [
+          "all",
+          "msgVpn",
+          "queue"
+        ]
+      }
+    },
+    "/msgVpns/{msgVpnName}/queues/{queueName}/copyMsgFromTopicEndpoint": {
+      "put": {
+        "description": "Copy a message from a Topic Endpoint to this Queue.\n\n\nAttribute|Required|Deprecated\n:---|:---:|:---:\nreplicationGroupMsgId|x|\nsourceTopicEndpointName|x|\n\n\n\nA SEMP client authorized with a minimum access scope/level of \"vpn/read-write\" is required to perform this operation.\n\nThis has been available since 2.29.",
+        "operationId": "doMsgVpnQueueCopyMsgFromTopicEndpoint",
+        "parameters": [
+          {
+            "description": "The name of the Message VPN.",
+            "in": "path",
+            "name": "msgVpnName",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "The name of the Queue.",
+            "in": "path",
+            "name": "queueName",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "The Copy Message From Topic Endpoint action's attributes.",
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/MsgVpnQueueCopyMsgFromTopicEndpoint"
+            }
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "The action was successfully performed.",
+            "schema": {
+              "$ref": "#/definitions/SempMetaOnlyResponse"
+            }
+          },
+          "default": {
+            "description": "The action was not successfully performed.",
+            "schema": {
+              "$ref": "#/definitions/SempMetaOnlyResponse"
+            }
+          }
+        },
+        "security": [
+          {
+            "basicAuth": []
+          }
+        ],
+        "summary": "Copy a message from a Topic Endpoint to this Queue.",
+        "tags": [
+          "all",
+          "msgVpn",
+          "queue"
+        ]
+      }
+    },
+    "/msgVpns/{msgVpnName}/queues/{queueName}/deleteMsgs": {
+      "put": {
+        "description": "Delete all spooled messages from the Queue.\n\n\n\nA SEMP client authorized with a minimum access scope/level of \"vpn/read-write\" is required to perform this operation.\n\nThis has been available since 2.28.",
+        "operationId": "doMsgVpnQueueDeleteMsgs",
+        "parameters": [
+          {
+            "description": "The name of the Message VPN.",
+            "in": "path",
+            "name": "msgVpnName",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "The name of the Queue.",
+            "in": "path",
+            "name": "queueName",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "The Delete All Messages action's attributes.",
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/MsgVpnQueueDeleteMsgs"
+            }
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "The action was successfully performed.",
+            "schema": {
+              "$ref": "#/definitions/SempMetaOnlyResponse"
+            }
+          },
+          "default": {
+            "description": "The action was not successfully performed.",
+            "schema": {
+              "$ref": "#/definitions/SempMetaOnlyResponse"
+            }
+          }
+        },
+        "security": [
+          {
+            "basicAuth": []
+          }
+        ],
+        "summary": "Delete all spooled messages from the Queue.",
+        "tags": [
+          "all",
+          "msgVpn",
+          "queue"
+        ]
+      }
+    },
     "/msgVpns/{msgVpnName}/queues/{queueName}/msgs": {
       "get": {
         "description": "Get a list of Queue Message objects.\n\nA Queue Message is a packet of information sent from producers to consumers using the Queue.\n\n\nAttribute|Identifying|Deprecated\n:---|:---:|:---:\nmsgId|x|\nmsgVpnName|x|\nqueueName|x|\n\n\n\nA SEMP client authorized with a minimum access scope/level of \"vpn/read-only\" is required to perform this operation.\n\nThis has been available since 2.11.",
@@ -5196,7 +6624,7 @@
     },
     "/msgVpns/{msgVpnName}/replayLogs": {
       "get": {
-        "description": "Get a list of Replay Log objects.\n\nWhen the Message Replay feature is enabled enabled, message brokers store persistent messages in a Replay Log. These messages are kept until the log is full, after which the oldest messages are removed to free up space for new messages.\n\n\nAttribute|Identifying|Deprecated\n:---|:---:|:---:\nmsgVpnName|x|\nreplayLogName|x|\n\n\n\nA SEMP client authorized with a minimum access scope/level of \"vpn/read-only\" is required to perform this operation.\n\nThis has been available since 2.11.",
+        "description": "Get a list of Replay Log objects.\n\nWhen the Message Replay feature is enabled, message brokers store persistent messages in a Replay Log. These messages are kept until the log is full, after which the oldest messages are removed to free up space for new messages.\n\n\nAttribute|Identifying|Deprecated\n:---|:---:|:---:\nmsgVpnName|x|\nreplayLogName|x|\n\n\n\nA SEMP client authorized with a minimum access scope/level of \"vpn/read-only\" is required to perform this operation.\n\nThis has been available since 2.11.",
         "operationId": "getMsgVpnReplayLogs",
         "parameters": [
           {
@@ -5251,7 +6679,7 @@
     },
     "/msgVpns/{msgVpnName}/replayLogs/{replayLogName}": {
       "get": {
-        "description": "Get a Replay Log object.\n\nWhen the Message Replay feature is enabled enabled, message brokers store persistent messages in a Replay Log. These messages are kept until the log is full, after which the oldest messages are removed to free up space for new messages.\n\n\nAttribute|Identifying|Deprecated\n:---|:---:|:---:\nmsgVpnName|x|\nreplayLogName|x|\n\n\n\nA SEMP client authorized with a minimum access scope/level of \"vpn/read-only\" is required to perform this operation.\n\nThis has been available since 2.11.",
+        "description": "Get a Replay Log object.\n\nWhen the Message Replay feature is enabled, message brokers store persistent messages in a Replay Log. These messages are kept until the log is full, after which the oldest messages are removed to free up space for new messages.\n\n\nAttribute|Identifying|Deprecated\n:---|:---:|:---:\nmsgVpnName|x|\nreplayLogName|x|\n\n\n\nA SEMP client authorized with a minimum access scope/level of \"vpn/read-only\" is required to perform this operation.\n\nThis has been available since 2.11.",
         "operationId": "getMsgVpnReplayLog",
         "parameters": [
           {
@@ -5883,6 +7311,242 @@
         ]
       }
     },
+    "/msgVpns/{msgVpnName}/topicEndpoints/{topicEndpointName}/copyMsgFromQueue": {
+      "put": {
+        "description": "Copy a message from a Queue to this Topic Endpoint.\n\n\nAttribute|Required|Deprecated\n:---|:---:|:---:\nreplicationGroupMsgId|x|\nsourceQueueName|x|\n\n\n\nA SEMP client authorized with a minimum access scope/level of \"vpn/read-write\" is required to perform this operation.\n\nThis has been available since 2.29.",
+        "operationId": "doMsgVpnTopicEndpointCopyMsgFromQueue",
+        "parameters": [
+          {
+            "description": "The name of the Message VPN.",
+            "in": "path",
+            "name": "msgVpnName",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "The name of the Topic Endpoint.",
+            "in": "path",
+            "name": "topicEndpointName",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "The Copy Message From Queue action's attributes.",
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/MsgVpnTopicEndpointCopyMsgFromQueue"
+            }
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "The action was successfully performed.",
+            "schema": {
+              "$ref": "#/definitions/SempMetaOnlyResponse"
+            }
+          },
+          "default": {
+            "description": "The action was not successfully performed.",
+            "schema": {
+              "$ref": "#/definitions/SempMetaOnlyResponse"
+            }
+          }
+        },
+        "security": [
+          {
+            "basicAuth": []
+          }
+        ],
+        "summary": "Copy a message from a Queue to this Topic Endpoint.",
+        "tags": [
+          "all",
+          "msgVpn",
+          "topicEndpoint"
+        ]
+      }
+    },
+    "/msgVpns/{msgVpnName}/topicEndpoints/{topicEndpointName}/copyMsgFromReplayLog": {
+      "put": {
+        "description": "Copy a message from a Replay Log to this Topic Endpoint.\n\n\nAttribute|Required|Deprecated\n:---|:---:|:---:\nreplicationGroupMsgId|x|\nsourceReplayLogName|x|\n\n\n\nA SEMP client authorized with a minimum access scope/level of \"vpn/read-write\" is required to perform this operation.\n\nThis has been available since 2.29.",
+        "operationId": "doMsgVpnTopicEndpointCopyMsgFromReplayLog",
+        "parameters": [
+          {
+            "description": "The name of the Message VPN.",
+            "in": "path",
+            "name": "msgVpnName",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "The name of the Topic Endpoint.",
+            "in": "path",
+            "name": "topicEndpointName",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "The Copy Message From Replay Log action's attributes.",
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/MsgVpnTopicEndpointCopyMsgFromReplayLog"
+            }
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "The action was successfully performed.",
+            "schema": {
+              "$ref": "#/definitions/SempMetaOnlyResponse"
+            }
+          },
+          "default": {
+            "description": "The action was not successfully performed.",
+            "schema": {
+              "$ref": "#/definitions/SempMetaOnlyResponse"
+            }
+          }
+        },
+        "security": [
+          {
+            "basicAuth": []
+          }
+        ],
+        "summary": "Copy a message from a Replay Log to this Topic Endpoint.",
+        "tags": [
+          "all",
+          "msgVpn",
+          "topicEndpoint"
+        ]
+      }
+    },
+    "/msgVpns/{msgVpnName}/topicEndpoints/{topicEndpointName}/copyMsgFromTopicEndpoint": {
+      "put": {
+        "description": "Copy a message from another Topic Endpoint to this Topic Endpoint.\n\n\nAttribute|Required|Deprecated\n:---|:---:|:---:\nreplicationGroupMsgId|x|\nsourceTopicEndpointName|x|\n\n\n\nA SEMP client authorized with a minimum access scope/level of \"vpn/read-write\" is required to perform this operation.\n\nThis has been available since 2.29.",
+        "operationId": "doMsgVpnTopicEndpointCopyMsgFromTopicEndpoint",
+        "parameters": [
+          {
+            "description": "The name of the Message VPN.",
+            "in": "path",
+            "name": "msgVpnName",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "The name of the Topic Endpoint.",
+            "in": "path",
+            "name": "topicEndpointName",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "The Copy Message From Topic Endpoint action's attributes.",
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/MsgVpnTopicEndpointCopyMsgFromTopicEndpoint"
+            }
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "The action was successfully performed.",
+            "schema": {
+              "$ref": "#/definitions/SempMetaOnlyResponse"
+            }
+          },
+          "default": {
+            "description": "The action was not successfully performed.",
+            "schema": {
+              "$ref": "#/definitions/SempMetaOnlyResponse"
+            }
+          }
+        },
+        "security": [
+          {
+            "basicAuth": []
+          }
+        ],
+        "summary": "Copy a message from another Topic Endpoint to this Topic Endpoint.",
+        "tags": [
+          "all",
+          "msgVpn",
+          "topicEndpoint"
+        ]
+      }
+    },
+    "/msgVpns/{msgVpnName}/topicEndpoints/{topicEndpointName}/deleteMsgs": {
+      "put": {
+        "description": "Delete all spooled messages from the Topic Endpoint.\n\n\n\nA SEMP client authorized with a minimum access scope/level of \"vpn/read-write\" is required to perform this operation.\n\nThis has been available since 2.28.",
+        "operationId": "doMsgVpnTopicEndpointDeleteMsgs",
+        "parameters": [
+          {
+            "description": "The name of the Message VPN.",
+            "in": "path",
+            "name": "msgVpnName",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "The name of the Topic Endpoint.",
+            "in": "path",
+            "name": "topicEndpointName",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "The Delete All Messages action's attributes.",
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/MsgVpnTopicEndpointDeleteMsgs"
+            }
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "The action was successfully performed.",
+            "schema": {
+              "$ref": "#/definitions/SempMetaOnlyResponse"
+            }
+          },
+          "default": {
+            "description": "The action was not successfully performed.",
+            "schema": {
+              "$ref": "#/definitions/SempMetaOnlyResponse"
+            }
+          }
+        },
+        "security": [
+          {
+            "basicAuth": []
+          }
+        ],
+        "summary": "Delete all spooled messages from the Topic Endpoint.",
+        "tags": [
+          "all",
+          "msgVpn",
+          "topicEndpoint"
+        ]
+      }
+    },
     "/msgVpns/{msgVpnName}/topicEndpoints/{topicEndpointName}/msgs": {
       "get": {
         "description": "Get a list of Topic Endpoint Message objects.\n\nA Topic Endpoint Message is a packet of information sent from producers to consumers using the Topic Endpoint.\n\n\nAttribute|Identifying|Deprecated\n:---|:---:|:---:\nmsgId|x|\nmsgVpnName|x|\ntopicEndpointName|x|\n\n\n\nA SEMP client authorized with a minimum access scope/level of \"vpn/read-only\" is required to perform this operation.\n\nThis has been available since 2.11.",
@@ -6412,6 +8076,306 @@
           "all",
           "msgVpn",
           "transaction"
+        ]
+      }
+    },
+    "/oauthProfiles": {
+      "get": {
+        "description": "Get a list of OAuth Profile objects.\n\nOAuth profiles specify how to securely authenticate to an OAuth provider.\n\n\nAttribute|Identifying|Deprecated\n:---|:---:|:---:\noauthProfileName|x|\n\n\n\nA SEMP client authorized with a minimum access scope/level of \"global/read-only\" is required to perform this operation.\n\nThis has been available since 2.24.",
+        "operationId": "getOauthProfiles",
+        "parameters": [
+          {
+            "$ref": "#/parameters/countQuery"
+          },
+          {
+            "$ref": "#/parameters/cursorQuery"
+          },
+          {
+            "$ref": "#/parameters/whereQuery"
+          },
+          {
+            "$ref": "#/parameters/selectQuery"
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "The list of OAuth Profile objects' attributes, and the request metadata.",
+            "schema": {
+              "$ref": "#/definitions/OauthProfilesResponse"
+            }
+          },
+          "default": {
+            "description": "The error response.",
+            "schema": {
+              "$ref": "#/definitions/SempMetaOnlyResponse"
+            }
+          }
+        },
+        "security": [
+          {
+            "basicAuth": []
+          }
+        ],
+        "summary": "Get a list of OAuth Profile objects.",
+        "tags": [
+          "all",
+          "oauthProfile"
+        ]
+      }
+    },
+    "/oauthProfiles/{oauthProfileName}": {
+      "get": {
+        "description": "Get an OAuth Profile object.\n\nOAuth profiles specify how to securely authenticate to an OAuth provider.\n\n\nAttribute|Identifying|Deprecated\n:---|:---:|:---:\noauthProfileName|x|\n\n\n\nA SEMP client authorized with a minimum access scope/level of \"global/read-only\" is required to perform this operation.\n\nThis has been available since 2.24.",
+        "operationId": "getOauthProfile",
+        "parameters": [
+          {
+            "description": "The name of the OAuth profile.",
+            "in": "path",
+            "name": "oauthProfileName",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "$ref": "#/parameters/selectQuery"
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "The OAuth Profile object's attributes, and the request metadata.",
+            "schema": {
+              "$ref": "#/definitions/OauthProfileResponse"
+            }
+          },
+          "default": {
+            "description": "The error response.",
+            "schema": {
+              "$ref": "#/definitions/SempMetaOnlyResponse"
+            }
+          }
+        },
+        "security": [
+          {
+            "basicAuth": []
+          }
+        ],
+        "summary": "Get an OAuth Profile object.",
+        "tags": [
+          "all",
+          "oauthProfile"
+        ]
+      }
+    },
+    "/oauthProfiles/{oauthProfileName}/clearStats": {
+      "put": {
+        "description": "Clear the statistics for the OAuth Profile.\n\n\n\nA SEMP client authorized with a minimum access scope/level of \"global/read-write\" is required to perform this operation.\n\nThis has been available since 2.24.",
+        "operationId": "doOauthProfileClearStats",
+        "parameters": [
+          {
+            "description": "The name of the OAuth profile.",
+            "in": "path",
+            "name": "oauthProfileName",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "The Clear Stats action's attributes.",
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/OauthProfileClearStats"
+            }
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "The action was successfully performed.",
+            "schema": {
+              "$ref": "#/definitions/SempMetaOnlyResponse"
+            }
+          },
+          "default": {
+            "description": "The action was not successfully performed.",
+            "schema": {
+              "$ref": "#/definitions/SempMetaOnlyResponse"
+            }
+          }
+        },
+        "security": [
+          {
+            "basicAuth": []
+          }
+        ],
+        "summary": "Clear the statistics for the OAuth Profile.",
+        "tags": [
+          "all",
+          "oauthProfile"
+        ]
+      }
+    },
+    "/sessions": {
+      "get": {
+        "description": "Get a list of SEMP Session objects.\n\nAdministrative sessions for configuration and monitoring.\n\n\nAttribute|Identifying|Deprecated\n:---|:---:|:---:\nsessionId|x|\nsessionUsername|x|\n\n\n\nA SEMP client authorized with a minimum access scope/level of \"global/read-only\" is required to perform this operation.\n\nThis has been available since 2.21.",
+        "operationId": "getSessions",
+        "parameters": [
+          {
+            "$ref": "#/parameters/countQuery"
+          },
+          {
+            "$ref": "#/parameters/cursorQuery"
+          },
+          {
+            "$ref": "#/parameters/whereQuery"
+          },
+          {
+            "$ref": "#/parameters/selectQuery"
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "The list of SEMP Session objects' attributes, and the request metadata.",
+            "schema": {
+              "$ref": "#/definitions/SessionsResponse"
+            }
+          },
+          "default": {
+            "description": "The error response.",
+            "schema": {
+              "$ref": "#/definitions/SempMetaOnlyResponse"
+            }
+          }
+        },
+        "security": [
+          {
+            "basicAuth": []
+          }
+        ],
+        "summary": "Get a list of SEMP Session objects.",
+        "tags": [
+          "all",
+          "session"
+        ]
+      }
+    },
+    "/sessions/{sessionUsername},{sessionId}": {
+      "get": {
+        "description": "Get a SEMP Session object.\n\nAdministrative sessions for configuration and monitoring.\n\n\nAttribute|Identifying|Deprecated\n:---|:---:|:---:\nsessionId|x|\nsessionUsername|x|\n\n\n\nA SEMP client authorized with a minimum access scope/level of \"global/read-only\" is required to perform this operation.\n\nThis has been available since 2.21.",
+        "operationId": "getSession",
+        "parameters": [
+          {
+            "description": "The username used for authorization.",
+            "in": "path",
+            "name": "sessionUsername",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "The unique identifier for the session.",
+            "in": "path",
+            "name": "sessionId",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "$ref": "#/parameters/selectQuery"
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "The SEMP Session object's attributes, and the request metadata.",
+            "schema": {
+              "$ref": "#/definitions/SessionResponse"
+            }
+          },
+          "default": {
+            "description": "The error response.",
+            "schema": {
+              "$ref": "#/definitions/SempMetaOnlyResponse"
+            }
+          }
+        },
+        "security": [
+          {
+            "basicAuth": []
+          }
+        ],
+        "summary": "Get a SEMP Session object.",
+        "tags": [
+          "all",
+          "session"
+        ]
+      }
+    },
+    "/sessions/{sessionUsername},{sessionId}/delete": {
+      "put": {
+        "description": "Delete the SEMP session.\n\n\n\nA SEMP client authorized with a minimum access scope/level of \"global/admin\" is required to perform this operation.\n\nThis has been available since 2.21.",
+        "operationId": "doSessionDelete",
+        "parameters": [
+          {
+            "description": "The username used for authorization.",
+            "in": "path",
+            "name": "sessionUsername",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "The unique identifier for the session.",
+            "in": "path",
+            "name": "sessionId",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "The Delete action's attributes.",
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/SessionDelete"
+            }
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "The action was successfully performed.",
+            "schema": {
+              "$ref": "#/definitions/SempMetaOnlyResponse"
+            }
+          },
+          "default": {
+            "description": "The action was not successfully performed.",
+            "schema": {
+              "$ref": "#/definitions/SempMetaOnlyResponse"
+            }
+          }
+        },
+        "security": [
+          {
+            "basicAuth": []
+          }
+        ],
+        "summary": "Delete the SEMP session.",
+        "tags": [
+          "all",
+          "session"
         ]
       }
     }

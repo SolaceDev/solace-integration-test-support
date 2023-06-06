@@ -16,8 +16,8 @@ public class SempV2ApiIT {
 
 	@Test
 	public void testGetPlatform() throws Exception {
-		assertEquals("VMR", sempV2Api.action().getAboutApi().getData().getPlatform());
-		assertEquals("VMR", sempV2Api.config().getAboutApi().getData().getPlatform());
-		assertEquals("VMR", sempV2Api.monitor().getAboutApi().getData().getPlatform());
+		assertEquals("VMR", sempV2Api.action().getAboutApi(null).getData().getPlatform());
+		assertEquals("VMR", sempV2Api.config().getAboutApi(null, null).getData().getPlatform());
+		assertEquals("VMR", sempV2Api.monitor().getAboutApi(null).getData().getPlatform());
 	}
 }
