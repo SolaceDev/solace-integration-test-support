@@ -22,7 +22,7 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
 		<repoName>SolaceDev</repoName>
-		<jcsmp.version>10.20.0</jcsmp.version>
+		<jcsmp.version>10.25.1</jcsmp.version>
 	</properties>
 
 	<licenses>
