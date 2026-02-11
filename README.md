@@ -10,7 +10,6 @@ The support suite for testing Solace integration projects.
 * [Repository Contents](#repository-contents)
 * [Usage](#usage)
 * [Testing](#testing)
-* [Release Process](#release-process)
 ---
 
 ## Repository Contents
@@ -22,9 +21,57 @@ These are the projects contained within this repository:
 
 ## Usage
 
-### Adding the GitHub Packages Repository
+### Configuring Maven to Pull the Artifacts
 
-Follow https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-apache-maven-registry#authenticating-with-a-personal-access-token
+This project's artifacts are published to GitHub Packages. To build projects that depend on these test utilities, you need to configure Maven to authenticate with GitHub Packages.
+
+#### Prerequisites
+
+- A GitHub account
+- GitHub Personal Access Token with `read:packages` scope (see [here for more info](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-apache-maven-registry#authenticating-with-a-personal-access-token))
+
+#### Maven Configuration
+
+Add the following to your Maven `~/.m2/settings.xml` file. In particular you need to add the `github-solace-integration-test-support` `<repository>` and `<server>` to your active `<profile>`:
+
+```xml
+<settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0
+                           http://maven.apache.org/xsd/settings-1.0.0.xsd">
+
+<activeProfiles>
+ <activeProfile>github</activeProfile>
+</activeProfiles>
+
+<profiles>
+ <profile>
+   <id>github</id>
+   <repositories>
+     <repository>
+       <id>central</id>
+       <url>https://repo.maven.apache.org/maven2</url>
+     </repository>
+     <repository>
+       <id>github-solace-integration-test-support</id>
+       <url>https://maven.pkg.github.com/solacedev/solace-integration-test-support</url>
+     </repository>
+   </repositories>
+ </profile>
+</profiles>
+
+<servers>
+ <server>
+   <id>github-solace-integration-test-support</id>
+   <username>YOUR_GITHUB_USERNAME</username>
+   <password>YOUR_PERSONAL_ACCESS_TOKEN</password>
+ </server>
+</servers>
+
+</settings>
+```
+
+Replace `YOUR_GITHUB_USERNAME` with your GitHub username and `YOUR_PERSONAL_ACCESS_TOKEN` with your token.
 
 ### Import BOM
 
