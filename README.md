@@ -62,7 +62,7 @@ Add the following to your Maven `~/.m2/settings.xml` file. In particular you nee
 
 <servers>
  <server>
-   <id>github-solacedev</id>
+   <id>github-solace-integration-test-support</id>
    <username>YOUR_GITHUB_USERNAME</username>
    <password>YOUR_PERSONAL_ACCESS_TOKEN</password>
  </server>
