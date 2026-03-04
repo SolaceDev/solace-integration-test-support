@@ -356,7 +356,7 @@ public class PubSubPlusExtension implements ParameterResolver {
 															   PubSubPlusContainer pubSubPlusContainer) {
 		return extensionContext.getStore(toxiproxyNamespace).getOrComputeIfAbsent(ToxiproxyContainerResource.class, key -> {
 			LOG.info("Creating Toxiproxy container");
-			ToxiproxyContainer container = new ToxiproxyContainer(DockerImageName.parse("shopify/toxiproxy:2.1.0"));
+			ToxiproxyContainer container = new ToxiproxyContainer(DockerImageName.parse("ghcr.io/shopify/toxiproxy:2.9.0"));
 			if (pubSubPlusContainer != null) {
 				if (pubSubPlusContainer.getNetwork() != null) {
 					container.withNetwork(pubSubPlusContainer.getNetwork()).withNetworkAliases(TOXIPROXY_NETWORK_ALIAS);
