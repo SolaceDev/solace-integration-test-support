@@ -1,5 +1,6 @@
 package com.solace.test.integration.testcontainer;
 
+import com.github.dockerjava.api.model.Ulimit;
 import java.time.Duration;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
@@ -34,10 +35,9 @@ public class PubSubPlusContainer extends GenericContainer<PubSubPlusContainer> {
 				.withAdminPassword(DEFAULT_ADMIN_PASSWORD)
 				.withMaxConnectionCount(DEFAULT_MAX_CONNECTION_COUNT)
 				.withSharedMemorySize(DEFAULT_SHM_SIZE)
-				.waitingFor(Wait.forHttp("/health-check/guaranteed-active")
-						.forPort(5550)
-						.forStatusCode(200)
-						.withStartupTimeout(Duration.ofMinutes(5)));
+				.withCreateContainerCmdModifier(cmd -> cmd.getHostConfig()
+				.withUlimits(new Ulimit[] {new Ulimit("nofile", 1048576L, 1048576L)}))
+				.waitingFor(Wait.forListeningPort());
 	}
 
 	public String getAdminUsername() {
