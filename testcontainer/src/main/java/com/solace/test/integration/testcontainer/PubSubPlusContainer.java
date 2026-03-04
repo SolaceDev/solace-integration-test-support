@@ -36,7 +36,7 @@ public class PubSubPlusContainer extends GenericContainer<PubSubPlusContainer> {
 				.withMaxConnectionCount(DEFAULT_MAX_CONNECTION_COUNT)
 				.withSharedMemorySize(DEFAULT_SHM_SIZE)
 				.withCreateContainerCmdModifier(cmd -> cmd.getHostConfig()
-				.withUlimits(new Ulimit[] {new Ulimit("nofile", 1048576L, 1048576L)}))
+				.withUlimits(new Ulimit[] {new Ulimit("nofile", 2448, 1048576L)}))
 				.waitingFor(Wait.forListeningPort());
 	}
 
