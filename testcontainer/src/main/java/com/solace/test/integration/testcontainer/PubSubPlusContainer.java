@@ -1,5 +1,6 @@
 package com.solace.test.integration.testcontainer;
 
+import java.time.Duration;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.utility.DockerImageName;
@@ -33,7 +34,10 @@ public class PubSubPlusContainer extends GenericContainer<PubSubPlusContainer> {
 				.withAdminPassword(DEFAULT_ADMIN_PASSWORD)
 				.withMaxConnectionCount(DEFAULT_MAX_CONNECTION_COUNT)
 				.withSharedMemorySize(DEFAULT_SHM_SIZE)
-				.waitingFor(Wait.forListeningPort());
+				.waitingFor(Wait.forHttp("/health-check/guaranteed-active")
+						.forPort(5550)
+						.forStatusCode(200)
+						.withStartupTimeout(Duration.ofMinutes(5)));
 	}
 
 	public String getAdminUsername() {
@@ -79,7 +83,8 @@ public class PubSubPlusContainer extends GenericContainer<PubSubPlusContainer> {
 		SEMP(8080, "http"),
 		SMF(55555, "tcp"),
 		SMF_WEB(8008, "ws"),
-		SSH(2222, null);
+		SSH(2222, null),
+		HEALTH(5550, "http");
 
 		private final int containerPort;
 		private final String protocol;
