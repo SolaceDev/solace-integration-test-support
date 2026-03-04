@@ -1,5 +1,7 @@
 package com.solace.test.integration.testcontainer;
 
+import com.github.dockerjava.api.model.Ulimit;
+import java.time.Duration;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.utility.DockerImageName;
@@ -33,6 +35,8 @@ public class PubSubPlusContainer extends GenericContainer<PubSubPlusContainer> {
 				.withAdminPassword(DEFAULT_ADMIN_PASSWORD)
 				.withMaxConnectionCount(DEFAULT_MAX_CONNECTION_COUNT)
 				.withSharedMemorySize(DEFAULT_SHM_SIZE)
+				.withCreateContainerCmdModifier(cmd -> cmd.getHostConfig()
+				.withUlimits(new Ulimit[] {new Ulimit("nofile", 2448, 1048576L)}))
 				.waitingFor(Wait.forListeningPort());
 	}
 
@@ -79,7 +83,8 @@ public class PubSubPlusContainer extends GenericContainer<PubSubPlusContainer> {
 		SEMP(8080, "http"),
 		SMF(55555, "tcp"),
 		SMF_WEB(8008, "ws"),
-		SSH(2222, null);
+		SSH(2222, null),
+		HEALTH(5550, "http");
 
 		private final int containerPort;
 		private final String protocol;
