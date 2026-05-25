@@ -20,7 +20,7 @@ permissions:
 
 jobs:
   publish:
-    if: github.ref == 'refs/heads/master'
+    if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/stage/2.0.1'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
